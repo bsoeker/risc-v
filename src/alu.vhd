@@ -35,7 +35,7 @@ begin
             when "0101" =>  -- SLL (logical shift left)
                 r <= shift_left(a, to_integer(unsigned(b(4 downto 0))));
             when "0110" =>  -- SRL (logical shift right)
-                r <= shift_right(unsigned(a), to_integer(unsigned(b(4 downto 0))));
+                r <= signed(shift_right(unsigned(a), to_integer(unsigned(b(4 downto 0)))));
             when "0111" =>  -- SRA (arithmetic shift right)
                 r <= shift_right(a, to_integer(unsigned(b(4 downto 0))));
             when "1000" =>  -- SLT (signed less than)
