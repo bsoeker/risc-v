@@ -61,10 +61,28 @@ begin
         alu_control <= "0011";  -- OR
         wait for 10 ns;
 
+        -- Test XOR: 0xAAAA XOR 0x5555 = 0xFFFF
+        op_a <= x"0000AAAA";
+        op_b <= x"00005555";
+        alu_control <= "0100";  -- XOR
+        wait for 10 ns;
+        
         -- Test SLL: 1 << 4 = 16
         op_a <= x"00000001";
         op_b <= x"00000004";
         alu_control <= "0101";  -- SLL
+        wait for 10 ns;
+
+        -- Test SRL: 0x00000080 >> 2 = 0x00000020
+        op_a <= x"00000080";
+        op_b <= x"00000002";
+        alu_control <= "0110";  -- SRL (logical)
+        wait for 10 ns;
+
+        -- Test SRA: 0xFFFFFFF8 (−8) >> 2 = 0xFFFFFFFE (−2) arithmetic shift
+        op_a <= x"FFFFFFF8";  -- -8 in 2's comp
+        op_b <= x"00000002";
+        alu_control <= "0111";  -- SRA (arithmetic)
         wait for 10 ns;
 
         -- Test SLT: -3 < 2 → 1
