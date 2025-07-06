@@ -53,6 +53,7 @@ begin
                         end if;
                     when "001" => alu_control <= "0101"; -- SLL
                     when "010" => alu_control <= "1000"; -- SLT
+                    when "011" => alu_control <= "1001"; -- SLTU
                     when "100" => alu_control <= "0100"; -- XOR
                     when "101" =>
                         if funct7 = "0000000" then
