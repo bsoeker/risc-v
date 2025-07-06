@@ -43,7 +43,7 @@ architecture Behavioral of top is
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
-    signal alu_src_a   : std_logic;
+    signal alu_src_a   : std_logic_vector(1 downto 0);
     signal alu_src_b   : std_logic;
     signal reg_write   : std_logic;
     signal mem_read    : std_logic;

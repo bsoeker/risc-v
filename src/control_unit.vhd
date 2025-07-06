@@ -9,7 +9,7 @@ entity control_unit is
         funct7      : in  std_logic_vector(6 downto 0);
 
         alu_control : out std_logic_vector(3 downto 0);
-        alu_src_a   : out std_logic; -- 0 = reg, 1 = PC
+        alu_src_a   : out std_logic_vector(1 downto 0); -- 00 = reg, 01 = PC, 10 = 0x00000000
         alu_src_b   : out std_logic; -- 0 = reg, 1 = imm
         reg_write   : out std_logic;
         mem_read    : out std_logic;
@@ -26,7 +26,7 @@ begin
     begin
         -- Set defaults
         alu_control <= "0000";
-        alu_src_a   <= '0';
+        alu_src_a   <= "00";
         alu_src_b   <= '0';
         reg_write   <= '0';
         mem_read    <= '0';
@@ -39,7 +39,7 @@ begin
 
             -- R-type (e.g., ADD, SUB, AND, OR, etc.)
             when "0110011" =>
-                alu_src_a <= '0'; -- reg
+                alu_src_a <= "00"; -- reg
                 alu_src_b <= '0'; -- reg
                 reg_write <= '1';
                 imm_type  <= "000"; -- irrelevant
@@ -68,7 +68,7 @@ begin
 
             -- I-type (e.g., ADDI, ORI, LW)
             when "0010011" =>  -- ALU imm
-                alu_src_a <= '0'; -- reg
+                alu_src_a <= "00"; -- reg
                 alu_src_b <= '1'; -- imm
                 reg_write <= '1';
                 imm_type  <= "000"; -- I-type
@@ -92,7 +92,7 @@ begin
 
             -- Load
             when "0000011" => -- LW
-                alu_src_a   <= '0';
+                alu_src_a   <= "00";
                 alu_src_b   <= '1';
                 alu_control <= "0000"; -- ADD
                 reg_write   <= '1';
@@ -102,7 +102,7 @@ begin
 
             -- Store
             when "0100011" => -- SW
-                alu_src_a   <= '0';
+                alu_src_a   <= "00";
                 alu_src_b   <= '1';
                 alu_control <= "0000"; -- ADD
                 mem_write   <= '1';
@@ -110,7 +110,7 @@ begin
 
             -- Branch
             when "1100011" => -- BEQ, BNE
-                alu_src_a   <= '0';
+                alu_src_a   <= "00";
                 alu_src_b   <= '0';
                 alu_control <= "0001"; -- SUB
                 pc_src      <= '1';
@@ -118,7 +118,7 @@ begin
 
             -- JAL
             when "1101111" =>
-                alu_src_a   <= '1'; -- PC
+                alu_src_a   <= "01"; -- PC
                 alu_src_b   <= '1'; -- imm
                 alu_control <= "0000"; -- PC + imm
                 reg_write   <= '1';
@@ -127,7 +127,7 @@ begin
 
             -- JALR
             when "1100111" =>
-                alu_src_a   <= '0'; -- reg
+                alu_src_a   <= "00"; -- reg
                 alu_src_b   <= '1'; -- imm
                 alu_control <= "0000"; -- reg + imm
                 reg_write   <= '1';
@@ -136,14 +136,14 @@ begin
 
             -- LUI / AUIPC
             when "0110111" => -- LUI
-                alu_src_a   <= '0';
+                alu_src_a   <= "10";
                 alu_src_b   <= '1';
                 alu_control <= "0000"; 
                 reg_write   <= '1';
                 imm_type    <= "011"; -- U-type
 
             when "0010111" => -- AUIPC
-                alu_src_a   <= '1';
+                alu_src_a   <= "01";
                 alu_src_b   <= '1';
                 alu_control <= "0000"; 
                 reg_write   <= '1';
