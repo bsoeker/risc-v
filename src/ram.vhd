@@ -35,10 +35,10 @@ begin
 
     -- Asynchronous read
     read_data <= 
-        mem(to_integer(unsigned(addr)))     &
-        mem(to_integer(unsigned(addr)) + 1) &
+        mem(to_integer(unsigned(addr)) + 3) &
         mem(to_integer(unsigned(addr)) + 2) &
-        mem(to_integer(unsigned(addr)) + 3);
+        mem(to_integer(unsigned(addr)) + 1) &
+        mem(to_integer(unsigned(addr)));
 
 end Behavioral;
 
