@@ -44,6 +44,13 @@ begin
                 else
                     r <= (others => '0');
                 end if;
+            when "1001" =>  -- SLTU (unsigned less than)
+                if unsigned(op_a) < unsigned(op_b) then
+                    r <= (others => '0'); r(0) <= '1';
+                else
+                    r <= (others => '0');
+                end if;
+
             when others =>
                 r <= (others => '0');
         end case;
