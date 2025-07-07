@@ -14,8 +14,11 @@ architecture Behavioral of top is
     -- === Signals ===
 
     -- PC
-    signal pc       : std_logic_vector(31 downto 0);
-    signal next_pc  : std_logic_vector(31 downto 0);
+    signal pc           : std_logic_vector(31 downto 0);
+    signal next_pc      : std_logic_vector(31 downto 0);
+    signal pc_target    : std_logic_vector(31 downto 0);
+    signal jalr_target  : std_logic_vector(31 downto 0);
+
 
     -- Instruction
     signal instr    : std_logic_vector(31 downto 0);
@@ -48,11 +51,16 @@ architecture Behavioral of top is
     signal reg_write   : std_logic;
     signal mem_read    : std_logic;
     signal mem_write   : std_logic;
-    signal mem_to_reg  : std_logic;
+    signal wb_sel      : std_logic_vector(1 downto 0);
     signal pc_src      : std_logic;
     signal imm_type    : std_logic_vector(2 downto 0);
 
 begin
+    next_pc     <= std_logic_vector(unsigned(pc) + 4);
+    jalr_target <= alu_result and x"FFFFFFFE"; -- JALR sets the LSB to 0 after the reg + imm
+    pc_target   <=
+        jalr_target when (pc_src = '1' and opcode = "1100111") else
+        alu_result;
 
     -- === Program Counter ===
     pc_unit: entity work.ProgramCounter
@@ -60,7 +68,7 @@ begin
             clk    => clk,
             reset  => reset,
             pc_src => pc_src,
-            pc_in  => alu_result,  -- For jumps and branches
+            pc_in  => pc_target,  -- For jumps and branches
             pc_out => pc
         );
 
@@ -91,7 +99,7 @@ begin
             reg_write   => reg_write,
             mem_read    => mem_read,
             mem_write   => mem_write,
-            mem_to_reg  => mem_to_reg,
+            wb_sel      => wb_sel,
             pc_src      => pc_src,
             imm_type    => imm_type
         );
@@ -157,9 +165,10 @@ begin
     -- === Writeback Mux ===
     mux_wb_inst: entity work.mux_wb
         port map (
-            sel => mem_to_reg,
+            sel => wb_sel,
             a   => alu_result,
             b   => ram_data_out,
+            c   => next_pc,
             y   => reg_write_data
         );
 
