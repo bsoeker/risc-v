@@ -14,7 +14,7 @@ entity control_unit is
         reg_write   : out std_logic;
         mem_read    : out std_logic;
         mem_write   : out std_logic;
-        mem_to_reg  : out std_logic;
+        wb_sel      : out std_logic_vector(1 downto 0);
         pc_src      : out std_logic;
         imm_type    : out std_logic_vector(2 downto 0)
     );
@@ -31,7 +31,7 @@ begin
         reg_write   <= '0';
         mem_read    <= '0';
         mem_write   <= '0';
-        mem_to_reg  <= '0';
+        wb_sel      <= "00";
         pc_src      <= '0';
         imm_type    <= "000";
 
@@ -97,7 +97,7 @@ begin
                 alu_control <= "0000"; -- ADD
                 reg_write   <= '1';
                 mem_read    <= '1';
-                mem_to_reg  <= '1';
+                wb_sel      <= "01";
                 imm_type    <= "000"; -- I-type
 
             -- Store
@@ -124,6 +124,7 @@ begin
                 reg_write   <= '1';
                 pc_src      <= '1';
                 imm_type    <= "100"; -- UJ-type
+                wb_sel      <= "10"; -- PC+4
 
             -- JALR
             when "1100111" =>
@@ -133,17 +134,18 @@ begin
                 reg_write   <= '1';
                 pc_src      <= '1';
                 imm_type    <= "000"; -- I-type
+                wb_sel      <= "10"; -- PC+4
 
             -- LUI / AUIPC
             when "0110111" => -- LUI
-                alu_src_a   <= "10";
+                alu_src_a   <= "10"; -- 0x00000000
                 alu_src_b   <= '1';
                 alu_control <= "0000"; 
                 reg_write   <= '1';
                 imm_type    <= "011"; -- U-type
 
             when "0010111" => -- AUIPC
-                alu_src_a   <= "01";
+                alu_src_a   <= "01"; -- PC
                 alu_src_b   <= '1';
                 alu_control <= "0000"; 
                 reg_write   <= '1';
