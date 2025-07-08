@@ -15,8 +15,8 @@ architecture Behavioral of top is
 
     -- PC
     signal pc            : std_logic_vector(31 downto 0);
-    signal next_pc       : std_logic_vector(31 downto 0);
-    signal pc_target     : std_logic_vector(31 downto 0);
+    signal pc_plus_four       : std_logic_vector(31 downto 0);
+    signal next_pc     : std_logic_vector(31 downto 0);
     signal jalr_target   : std_logic_vector(31 downto 0);
     signal branch_target : std_logic_vector(31 downto 0);
     signal branch_taken  : std_logic;
@@ -58,7 +58,7 @@ architecture Behavioral of top is
     signal branch      : std_logic;
 
 begin
-    next_pc       <= std_logic_vector(unsigned(pc) + 4);
+    pc_plus_four       <= std_logic_vector(unsigned(pc) + 4);
     jalr_target   <= alu_result and x"FFFFFFFE";  -- Clear LSB for JALR
     branch_target <= std_logic_vector(signed(pc) + signed(imm));
     branch_taken <= '1' when branch = '1' and (
@@ -71,11 +71,11 @@ begin
     ) else '0';
 
     
-    pc_target <=
+    next_pc <=
         jalr_target   when (jump = '1' and opcode = "1100111") else
         alu_result    when (jump = '1') else
         branch_target when (branch_taken = '1') else
-        next_pc;
+        pc_plus_four;
 
 
     -- === Program Counter ===
@@ -83,7 +83,7 @@ begin
         port map (
             clk    => clk,
             reset  => reset,
-            pc_in  => pc_target,  -- For jumps and branches
+            pc_in  => next_pc,  -- For jumps and branches
             pc_out => pc
         );
 
@@ -184,7 +184,7 @@ begin
             sel => wb_sel,
             a   => alu_result,
             b   => ram_data_out,
-            c   => next_pc,
+            c   => pc_plus_four,
             y   => reg_write_data
         );
 
