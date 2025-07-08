@@ -6,7 +6,6 @@ entity ProgramCounter is
     port (
         clk     : in  std_logic;
         reset   : in  std_logic;
-        pc_src  : in  std_logic;  -- 0 = pc + 4, 1 = jump/branch
         pc_in   : in  std_logic_vector(31 downto 0);  -- target addr (from ALU or imm)
         pc_out  : out std_logic_vector(31 downto 0)
     );
@@ -22,12 +21,7 @@ begin
             if reset = '1' then
                 pc_reg <= (others => '0');
             else
-                if pc_src = '1' then
-                    pc_reg <= pc_in;
-                else
-                    -- +4 since the memory blocks are byte-addressable
-                    pc_reg <= std_logic_vector(unsigned(pc_reg) + 4);
-                end if;
+                pc_reg <= pc_in;
             end if;
         end if;
     end process;

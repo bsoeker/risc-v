@@ -14,11 +14,12 @@ architecture Behavioral of top is
     -- === Signals ===
 
     -- PC
-    signal pc           : std_logic_vector(31 downto 0);
-    signal next_pc      : std_logic_vector(31 downto 0);
-    signal pc_target    : std_logic_vector(31 downto 0);
-    signal jalr_target  : std_logic_vector(31 downto 0);
-
+    signal pc            : std_logic_vector(31 downto 0);
+    signal next_pc       : std_logic_vector(31 downto 0);
+    signal pc_target     : std_logic_vector(31 downto 0);
+    signal jalr_target   : std_logic_vector(31 downto 0);
+    signal branch_target : std_logic_vector(31 downto 0);
+    signal branch_taken  : std_logic;
 
     -- Instruction
     signal instr    : std_logic_vector(31 downto 0);
@@ -52,22 +53,36 @@ architecture Behavioral of top is
     signal mem_read    : std_logic;
     signal mem_write   : std_logic;
     signal wb_sel      : std_logic_vector(1 downto 0);
-    signal pc_src      : std_logic;
     signal imm_type    : std_logic_vector(2 downto 0);
+    signal jump        : std_logic;
+    signal branch      : std_logic;
 
 begin
-    next_pc     <= std_logic_vector(unsigned(pc) + 4);
-    jalr_target <= alu_result and x"FFFFFFFE"; -- JALR sets the LSB to 0 after the reg + imm
-    pc_target   <=
-        jalr_target when (pc_src = '1' and opcode = "1100111") else
-        alu_result;
+    next_pc       <= std_logic_vector(unsigned(pc) + 4);
+    jalr_target   <= alu_result and x"FFFFFFFE";  -- Clear LSB for JALR
+    branch_target <= std_logic_vector(signed(pc) + signed(imm));
+    branch_taken <= '1' when branch = '1' and (
+        (funct3 = "000" and zero_flag = '1') or -- BEQ
+        (funct3 = "001" and zero_flag = '0') or -- BNE
+        (funct3 = "100" and alu_result = x"00000001") or -- BLT (SLT output 1)
+        (funct3 = "101" and alu_result = x"00000000") or -- BGE (SLT output 0)
+        (funct3 = "110" and alu_result = x"00000001") or -- BLTU
+        (funct3 = "111" and alu_result = x"00000000")    -- BGEU
+    ) else '0';
+
+    
+    pc_target <=
+        jalr_target   when (jump = '1' and opcode = "1100111") else
+        alu_result    when (jump = '1') else
+        branch_target when (branch_taken = '1') else
+        next_pc;
+
 
     -- === Program Counter ===
     pc_unit: entity work.ProgramCounter
         port map (
             clk    => clk,
             reset  => reset,
-            pc_src => pc_src,
             pc_in  => pc_target,  -- For jumps and branches
             pc_out => pc
         );
@@ -100,8 +115,9 @@ begin
             mem_read    => mem_read,
             mem_write   => mem_write,
             wb_sel      => wb_sel,
-            pc_src      => pc_src,
-            imm_type    => imm_type
+            imm_type    => imm_type,
+            jump        => jump,
+            branch      => branch
         );
 
     -- === Register File ===
