@@ -15,8 +15,9 @@ entity control_unit is
         mem_read    : out std_logic;
         mem_write   : out std_logic;
         wb_sel      : out std_logic_vector(1 downto 0);
-        pc_src      : out std_logic;
-        imm_type    : out std_logic_vector(2 downto 0)
+        imm_type    : out std_logic_vector(2 downto 0);
+        jump        : out std_logic;
+        branch      : out std_logic
     );
 end control_unit;
 
@@ -32,8 +33,9 @@ begin
         mem_read    <= '0';
         mem_write   <= '0';
         wb_sel      <= "00";
-        pc_src      <= '0';
         imm_type    <= "000";
+        jump        <= '0';
+        branch      <= '0';
 
         case opcode is
 
@@ -42,7 +44,6 @@ begin
                 alu_src_a <= "00"; -- reg
                 alu_src_b <= '0'; -- reg
                 reg_write <= '1';
-                imm_type  <= "000"; -- irrelevant
 
                 case funct3 is
                     when "000" =>
@@ -66,7 +67,7 @@ begin
                     when others => alu_control <= "0000";
                 end case;
 
-            -- I-type (e.g., ADDI, ORI, LW)
+            -- I-type (e.g., ADDI, ORI)
             when "0010011" =>  -- ALU imm
                 alu_src_a <= "00"; -- reg
                 alu_src_b <= '1'; -- imm
@@ -109,30 +110,34 @@ begin
                 imm_type    <= "001"; -- S-type
 
             -- Branch
-            when "1100011" => -- BEQ, BNE
+            when "1100011" => -- All branches
+                branch      <= '1';
                 alu_src_a   <= "00";
                 alu_src_b   <= '0';
-                alu_control <= "0001"; -- SUB
-                pc_src      <= '1';
                 imm_type    <= "010"; -- SB-type
+                alu_control <= 
+                    "0001" when funct3 = "000" or funct3 = "001" else -- SUB for BEQ/BNE
+                    "1000" when funct3 = "100" or funct3 = "101" else -- SLT  for BLT/BGE
+                    "1001";                                           -- SLTU for BLTU/BGEU
+
 
             -- JAL
             when "1101111" =>
+                jump        <= '1';
                 alu_src_a   <= "01"; -- PC
                 alu_src_b   <= '1'; -- imm
                 alu_control <= "0000"; -- PC + imm
                 reg_write   <= '1';
-                pc_src      <= '1';
                 imm_type    <= "100"; -- UJ-type
                 wb_sel      <= "10"; -- PC+4
 
             -- JALR
             when "1100111" =>
+                jump        <= '1';
                 alu_src_a   <= "00"; -- reg
                 alu_src_b   <= '1'; -- imm
                 alu_control <= "0000"; -- reg + imm
                 reg_write   <= '1';
-                pc_src      <= '1';
                 imm_type    <= "000"; -- I-type
                 wb_sel      <= "10"; -- PC+4
 
