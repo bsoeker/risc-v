@@ -15,8 +15,8 @@ architecture Behavioral of top is
 
     -- PC
     signal pc            : std_logic_vector(31 downto 0);
-    signal pc_plus_four       : std_logic_vector(31 downto 0);
-    signal next_pc     : std_logic_vector(31 downto 0);
+    signal pc_plus_four  : std_logic_vector(31 downto 0);
+    signal next_pc       : std_logic_vector(31 downto 0);
     signal jalr_target   : std_logic_vector(31 downto 0);
     signal branch_target : std_logic_vector(31 downto 0);
     signal branch_taken  : std_logic;
@@ -35,7 +35,7 @@ architecture Behavioral of top is
     signal reg_write_data     : std_logic_vector(31 downto 0);
 
     -- Immediate
-    signal imm        : std_logic_vector(31 downto 0);
+    signal imm : std_logic_vector(31 downto 0);
 
     -- ALU
     signal alu_in_a, alu_in_b : std_logic_vector(31 downto 0);
@@ -43,25 +43,25 @@ architecture Behavioral of top is
     signal zero_flag          : std_logic;
 
     -- Memory
-    signal ram_data_out : std_logic_vector(31 downto 0);
+    signal mem_data_out : std_logic_vector(31 downto 0);
+    signal ram_write_en : std_logic;
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
     signal alu_src_a   : std_logic_vector(1 downto 0);
     signal alu_src_b   : std_logic;
     signal reg_write   : std_logic;
-    signal mem_read    : std_logic;
-    signal mem_write   : std_logic;
+    signal mem_op      : std_logic;
     signal wb_sel      : std_logic_vector(1 downto 0);
     signal imm_type    : std_logic_vector(2 downto 0);
     signal jump        : std_logic;
     signal branch      : std_logic;
 
 begin
-    pc_plus_four       <= std_logic_vector(unsigned(pc) + 4);
+    pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
     jalr_target   <= alu_result and x"FFFFFFFE";  -- Clear LSB for JALR
     branch_target <= std_logic_vector(signed(pc) + signed(imm));
-    branch_taken <= '1' when branch = '1' and (
+    branch_taken  <= '1' when branch = '1' and (
         (funct3 = "000" and zero_flag = '1') or -- BEQ
         (funct3 = "001" and zero_flag = '0') or -- BNE
         (funct3 = "100" and alu_result = x"00000001") or -- BLT (SLT output 1)
@@ -112,8 +112,7 @@ begin
             alu_src_a   => alu_src_a,
             alu_src_b   => alu_src_b,
             reg_write   => reg_write,
-            mem_read    => mem_read,
-            mem_write   => mem_write,
+            mem_op      => mem_op,
             wb_sel      => wb_sel,
             imm_type    => imm_type,
             jump        => jump,
@@ -168,14 +167,15 @@ begin
             zero        => zero_flag
         );
 
+    ram_write_en <= '1' when mem_op = '1' and alu_result(31 downto 12) = x"00000" else '0';
     -- === RAM (Data Memory) ===
     ram_inst: entity work.ram
         port map (
             clk        => clk,
-            addr       => alu_result(9 downto 0),
-            write_en   => mem_write,
+            addr       => alu_result(11 downto 0),
+            write_en   => ram_write_en,
             write_data => rs2_data,
-            read_data  => ram_data_out
+            read_data  => mem_data_out
         );
 
     -- === Writeback Mux ===
@@ -183,7 +183,7 @@ begin
         port map (
             sel => wb_sel,
             a   => alu_result,
-            b   => ram_data_out,
+            b   => mem_data_out,
             c   => pc_plus_four,
             y   => reg_write_data
         );

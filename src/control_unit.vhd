@@ -12,8 +12,7 @@ entity control_unit is
         alu_src_a   : out std_logic_vector(1 downto 0); -- 00 = reg, 01 = PC, 10 = 0x00000000
         alu_src_b   : out std_logic; -- 0 = reg, 1 = imm
         reg_write   : out std_logic;
-        mem_read    : out std_logic;
-        mem_write   : out std_logic;
+        mem_op      : out std_logic; -- 0 = read, 1 = write
         wb_sel      : out std_logic_vector(1 downto 0);
         imm_type    : out std_logic_vector(2 downto 0);
         jump        : out std_logic;
@@ -30,8 +29,7 @@ begin
         alu_src_a   <= "00";
         alu_src_b   <= '0';
         reg_write   <= '0';
-        mem_read    <= '0';
-        mem_write   <= '0';
+        mem_op      <= '0';
         wb_sel      <= "00";
         imm_type    <= "000";
         jump        <= '0';
@@ -97,7 +95,7 @@ begin
                 alu_src_b   <= '1';
                 alu_control <= "0000"; -- ADD
                 reg_write   <= '1';
-                mem_read    <= '1';
+                mem_op      <= '0'; -- read
                 wb_sel      <= "01";
                 imm_type    <= "000"; -- I-type
 
@@ -106,7 +104,8 @@ begin
                 alu_src_a   <= "00";
                 alu_src_b   <= '1';
                 alu_control <= "0000"; -- ADD
-                mem_write   <= '1';
+                mem_op      <= '1'; -- write
+                wb_sel      <= "01";
                 imm_type    <= "001"; -- S-type
 
             -- Branch
@@ -157,7 +156,6 @@ begin
                 imm_type    <= "011"; -- U-type
 
             when others =>
-                -- All defaults already set above
                 null;
         end case;
     end process;

@@ -4,13 +4,13 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity ram is
     generic (
-        addr_width : integer := 10;  -- 2^10 = 1024 words = 4KB
+        addr_width : integer := 12;  -- 2^12 = 4096 words = 16KB
         data_width : integer := 32
     );
     port (
         clk       : in  std_logic;
         addr      : in  std_logic_vector(addr_width - 1 downto 0);
-        write_en  : in  std_logic;
+        write_en  : in  std_logic; -- '0' => read, '1' => write
         write_data: in  std_logic_vector(data_width - 1 downto 0);
         read_data : out std_logic_vector(data_width - 1 downto 0)
     );
