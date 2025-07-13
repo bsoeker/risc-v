@@ -6,7 +6,7 @@ entity mux_wb is
     Port (
         sel : in  std_logic_vector(1 downto 0);
         a   : in  std_logic_vector(31 downto 0); -- ALU result
-        b   : in  std_logic_vector(31 downto 0); -- RAM data
+        b   : in  std_logic_vector(31 downto 0); -- Memory data
         c   : in  std_logic_vector(31 downto 0); -- PC + 4
         y   : out std_logic_vector(31 downto 0)
     );
