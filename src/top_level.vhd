@@ -43,8 +43,10 @@ architecture Behavioral of top is
     signal zero_flag          : std_logic;
 
     -- Memory
-    signal mem_data_out : std_logic_vector(31 downto 0);
-    signal ram_write_en : std_logic;
+    signal mem_data_out     : std_logic_vector(31 downto 0);
+    signal ram_write_en     : std_logic;
+    signal byte_offset      : std_logic_vector(1 downto 0);
+    signal store_misaligned : std_logic;
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -56,6 +58,7 @@ architecture Behavioral of top is
     signal imm_type    : std_logic_vector(2 downto 0);
     signal jump        : std_logic;
     signal branch      : std_logic;
+    signal write_mask  : std_logic_vector(3 downto 0);
 
 begin
     pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
@@ -116,7 +119,8 @@ begin
             wb_sel      => wb_sel,
             imm_type    => imm_type,
             jump        => jump,
-            branch      => branch
+            branch      => branch,
+            write_mask  => write_mask
         );
 
     -- === Register File ===
@@ -167,7 +171,15 @@ begin
             zero        => zero_flag
         );
 
-    ram_write_en <= '1' when mem_op = '1' and alu_result(31 downto 12) = x"00000" else '0';
+    -- Misaligned write prevention logic
+    byte_offset <= alu_result(1 downto 0);
+    store_misaligned <= '1' when 
+        (funct3 = "001" and byte_offset(0) = '1') or   -- SH misaligned
+        (funct3 = "010" and byte_offset /= "00")       -- SW misaligned
+    else '0';
+
+    ram_write_en <= '1' when mem_op = '1' and alu_result(31 downto 12) = x"00000"
+                    and store_misaligned = '0' else '0';
     -- === RAM (Data Memory) ===
     ram_inst: entity work.ram
         port map (
@@ -175,6 +187,7 @@ begin
             addr       => alu_result(11 downto 0),
             write_en   => ram_write_en,
             write_data => rs2_data,
+            write_mask => write_mask,
             read_data  => mem_data_out
         );
 
