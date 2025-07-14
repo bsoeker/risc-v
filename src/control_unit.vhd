@@ -16,7 +16,8 @@ entity control_unit is
         wb_sel      : out std_logic_vector(1 downto 0);
         imm_type    : out std_logic_vector(2 downto 0);
         jump        : out std_logic;
-        branch      : out std_logic
+        branch      : out std_logic;
+        write_mask  : out std_logic_vector(3 downto 0)
     );
 end control_unit;
 
@@ -107,6 +108,10 @@ begin
                 mem_op      <= '1'; -- write
                 wb_sel      <= "01";
                 imm_type    <= "001"; -- S-type
+                write_mask  <= 
+                    "0001" when funct3 = "000" else -- SB
+                    "0011" when funct3 = "001" else -- SH
+                    "1111" when funct3 = "010";     -- SW
 
             -- Branch
             when "1100011" => -- All branches
