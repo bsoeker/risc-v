@@ -4,7 +4,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity rom is
     generic (
-        addr_width  : integer := 10;  -- 2^10 = 1024 words
+        addr_width  : integer := 10;  -- 2^10 = 1KB
         data_width  : integer := 32 
     );
     port (
