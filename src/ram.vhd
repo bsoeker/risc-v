@@ -4,7 +4,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity ram is
     generic (
-        addr_width : integer := 12;  -- 2^12 = 4096 words = 16KB
+        addr_width : integer := 12;  -- 2^12 = 4096 = 4KB
         data_width : integer := 32
     );
     port (

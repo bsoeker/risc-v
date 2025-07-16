@@ -48,6 +48,10 @@ architecture Behavioral of top is
     signal byte_offset      : std_logic_vector(1 downto 0);
     signal store_misaligned : std_logic;
     signal loaded_value     : std_logic_vector(31 downto 0);
+    signal ram_en           : std_logic;
+    signal ram_addr         : std_logic_vector(11 downto 0);
+    signal uart_en          : std_logic;
+
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -176,6 +180,14 @@ begin
             zero        => zero_flag
         );
 
+    addr_dec_inst: entity work.address_decoder
+    port map (
+        addr     => alu_result,
+        ram_en   => ram_en,
+        ram_addr => ram_addr,
+        uart_en  => uart_en
+    );
+
     -- Misaligned write prevention logic
     byte_offset <= alu_result(1 downto 0);
     store_misaligned <= '1' when 
@@ -183,13 +195,13 @@ begin
         (funct3 = "010" and byte_offset /= "00")       -- SW misaligned
     else '0';
 
-    ram_write_en <= '1' when mem_op = '1' and alu_result(31 downto 12) = x"00000"
-                    and store_misaligned = '0' else '0';
+    ram_write_en <= '1' when mem_op = '1' and ram_en = '1'
+                and store_misaligned = '0' else '0';
     -- === RAM (Data Memory) ===
     ram_inst: entity work.ram
         port map (
             clk        => clk,
-            addr       => alu_result(11 downto 0),
+            addr       => ram_addr,
             write_en   => ram_write_en,
             write_data => rs2_data,
             write_mask => write_mask,
