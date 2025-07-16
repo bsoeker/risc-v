@@ -17,7 +17,9 @@ entity control_unit is
         imm_type    : out std_logic_vector(2 downto 0);
         jump        : out std_logic;
         branch      : out std_logic;
-        write_mask  : out std_logic_vector(3 downto 0)
+        write_mask  : out std_logic_vector(3 downto 0);
+        read_mask   : out std_logic_vector(3 downto 0);
+        is_unsigned : out std_logic -- for load_unit
     );
 end control_unit;
 
@@ -35,6 +37,9 @@ begin
         imm_type    <= "000";
         jump        <= '0';
         branch      <= '0';
+        write_mask  <= "0000";
+        read_mask   <= "0000";
+        is_unsigned <= '0';
 
         case opcode is
 
@@ -99,6 +104,12 @@ begin
                 mem_op      <= '0'; -- read
                 wb_sel      <= "01";
                 imm_type    <= "000"; -- I-type
+                read_mask   <= -- for load_unit
+                    "0001" when funct3 = "000" or funct3 = "100" else -- LB, LBU
+                    "0011" when funct3 = "001" or funct3 = "101" else -- LH, LHU
+                    "1111" when funct3 = "010";
+                is_unsigned <=
+                    '1' when funct3 = "100" or funct3 = "101" else '0';
 
             -- Store
             when "0100011" => -- SW
