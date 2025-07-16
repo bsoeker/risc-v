@@ -47,6 +47,7 @@ architecture Behavioral of top is
     signal ram_write_en     : std_logic;
     signal byte_offset      : std_logic_vector(1 downto 0);
     signal store_misaligned : std_logic;
+    signal loaded_value     : std_logic_vector(31 downto 0);
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -59,6 +60,8 @@ architecture Behavioral of top is
     signal jump        : std_logic;
     signal branch      : std_logic;
     signal write_mask  : std_logic_vector(3 downto 0);
+    signal read_mask   : std_logic_vector(3 downto 0);
+    signal is_unsigned : std_logic;
 
 begin
     pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
@@ -120,7 +123,9 @@ begin
             imm_type    => imm_type,
             jump        => jump,
             branch      => branch,
-            write_mask  => write_mask
+            write_mask  => write_mask,
+            read_mask   => read_mask,
+            is_unsigned => is_unsigned
         );
 
     -- === Register File ===
@@ -191,12 +196,21 @@ begin
             read_data  => mem_data_out
         );
 
+    -- === Load Unit ===
+    load_unit_inst: entity work.load_unit
+        port map (
+            read_mask     => read_mask,
+            is_unsigned   => is_unsigned,
+            mem_data      => mem_data_out,
+            loaded_value  => loaded_value
+        );
+
     -- === Writeback Mux ===
     mux_wb_inst: entity work.mux_wb
         port map (
             sel => wb_sel,
             a   => alu_result,
-            b   => mem_data_out,
+            b   => loaded_value,
             c   => pc_plus_four,
             y   => reg_write_data
         );
