@@ -4,8 +4,9 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity top is
     Port (
-        clk   : in std_logic;
-        reset : in std_logic
+        clk   : in  std_logic;
+        reset : in  std_logic;
+        RsTx  : out std_logic
     );
 end top;
 
@@ -44,15 +45,19 @@ architecture Behavioral of top is
     signal zero_flag          : std_logic;
 
     -- Memory
-    signal mem_data_out     : std_logic_vector(31 downto 0);
+    signal mem_data         : std_logic_vector(31 downto 0);
+    signal ram_read_data    : std_logic_vector(31 downto 0);
     signal ram_write_en     : std_logic;
     signal byte_offset      : std_logic_vector(1 downto 0);
     signal store_misaligned : std_logic;
     signal loaded_value     : std_logic_vector(31 downto 0);
     signal ram_en           : std_logic;
     signal ram_addr         : std_logic_vector(11 downto 0);
-    signal uart_en          : std_logic;
-
+    -- UART
+    signal uart_en        : std_logic;
+    signal uart_addr      : std_logic_vector(1 downto 0);
+    signal uart_read_data : std_logic_vector(31 downto 0);
+    signal uart_write_en  : std_logic;
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -198,10 +203,11 @@ begin
 
     addr_dec_inst: entity work.address_decoder
     port map (
-        addr     => alu_result,
-        ram_en   => ram_en,
-        ram_addr => ram_addr,
-        uart_en  => uart_en
+        addr      => alu_result,
+        ram_en    => ram_en,
+        ram_addr  => ram_addr,
+        uart_en   => uart_en,
+        uart_addr => uart_addr
     );
 
     -- Misaligned write prevention logic
@@ -221,15 +227,29 @@ begin
             write_en   => ram_write_en,
             write_data => rs2_data,
             write_mask => write_mask,
-            read_data  => mem_data_out
+            read_data  => ram_read_data
         );
 
+    uart_write_en <= '1' when mem_op = '1' and uart_en = '1' else '0';
+    -- === UART ===
+    uart_inst: entity work.uart
+        port map (
+            clk         => clk,
+            reset       => reset,
+            addr        => uart_addr,
+            wr_en       => uart_write_en,
+            write_data  => rs2_data,
+            read_data   => uart_read_data,
+            RsTx        => RsTx
+        );
+
+    mem_data <= ram_read_data when ram_en = '1' else uart_read_data;
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (
             read_mask     => read_mask,
             is_unsigned   => is_unsigned,
-            mem_data      => mem_data_out,
+            mem_data      => mem_data,
             loaded_value  => loaded_value
         );
 
