@@ -19,7 +19,8 @@ entity control_unit is
         branch      : out std_logic;
         write_mask  : out std_logic_vector(3 downto 0);
         read_mask   : out std_logic_vector(3 downto 0);
-        is_unsigned : out std_logic -- for load_unit
+        is_unsigned : out std_logic; -- for load_unit
+        stall       : out std_logic -- stall flag for RAM LOAD instructions
     );
 end control_unit;
 
@@ -40,6 +41,7 @@ begin
         write_mask  <= "0000";
         read_mask   <= "0000";
         is_unsigned <= '0';
+        stall       <= '0';
 
         case opcode is
 
@@ -97,6 +99,7 @@ begin
 
             -- Load
             when "0000011" => -- LW
+                stall       <= '1';
                 alu_src_a   <= "00";
                 alu_src_b   <= '1';
                 alu_control <= "0000"; -- ADD
