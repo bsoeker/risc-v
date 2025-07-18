@@ -21,6 +21,7 @@ architecture Behavioral of top is
     signal branch_target : std_logic_vector(31 downto 0);
     signal branch_taken  : std_logic;
 
+
     -- Instruction
     signal instr    : std_logic_vector(31 downto 0);
     signal opcode   : std_logic_vector(6 downto 0);
@@ -66,8 +67,24 @@ architecture Behavioral of top is
     signal write_mask  : std_logic_vector(3 downto 0);
     signal read_mask   : std_logic_vector(3 downto 0);
     signal is_unsigned : std_logic;
+    signal stall       : std_logic; -- from control unit
+
+    signal stall_reg   : std_logic := '0'; -- to hold the stall state
 
 begin
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '1' then
+                stall_reg <= '0';
+            elsif stall = '1' then
+                stall_reg <= '1';
+            else
+                stall_reg <= '0'; -- One cycle only
+            end if;
+        end if;
+    end process;
+
     pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
     jalr_target   <= alu_result and x"FFFFFFFE";  -- Clear LSB for JALR
     branch_target <= std_logic_vector(signed(pc) + signed(imm));
@@ -80,13 +97,11 @@ begin
         (funct3 = "111" and alu_result = x"00000000")    -- BGEU
     ) else '0';
 
-    
-    next_pc <=
+    next_pc <= pc when (stall = '1' and stall_reg = '0') else
         jalr_target   when (jump = '1' and opcode = "1100111") else
         alu_result    when (jump = '1') else
         branch_target when (branch_taken = '1') else
         pc_plus_four;
-
 
     -- === Program Counter ===
     pc_unit: entity work.ProgramCounter
@@ -129,7 +144,8 @@ begin
             branch      => branch,
             write_mask  => write_mask,
             read_mask   => read_mask,
-            is_unsigned => is_unsigned
+            is_unsigned => is_unsigned,
+            stall       => stall
         );
 
     -- === Register File ===
