@@ -53,6 +53,9 @@ architecture Behavioral of top is
     signal loaded_value     : std_logic_vector(31 downto 0);
     signal ram_en           : std_logic;
     signal ram_addr         : std_logic_vector(11 downto 0);
+    signal store_write_data : std_logic_vector(31 downto 0);
+    signal store_write_mask : std_logic_vector(3 downto 0);
+
     -- UART
     signal uart_en        : std_logic;
     signal uart_addr      : std_logic_vector(1 downto 0);
@@ -69,7 +72,6 @@ architecture Behavioral of top is
     signal imm_type    : std_logic_vector(2 downto 0);
     signal jump        : std_logic;
     signal branch      : std_logic;
-    signal write_mask  : std_logic_vector(3 downto 0);
     signal read_mask   : std_logic_vector(3 downto 0);
     signal is_unsigned : std_logic;
     signal stall       : std_logic; -- from control unit
@@ -147,8 +149,6 @@ begin
             imm_type    => imm_type,
             jump        => jump,
             branch      => branch,
-            write_mask  => write_mask,
-            read_mask   => read_mask,
             is_unsigned => is_unsigned,
             stall       => stall
         );
@@ -210,23 +210,27 @@ begin
         uart_addr => uart_addr
     );
 
-    -- Misaligned write prevention logic
     byte_offset <= alu_result(1 downto 0);
-    store_misaligned <= '1' when 
-        (funct3 = "001" and byte_offset(0) = '1') or   -- SH misaligned
-        (funct3 = "010" and byte_offset /= "00")       -- SW misaligned
-    else '0';
+    store_unit_inst: entity work.store_unit
+    port map (
+        funct3      => funct3,
+        addr_offset => byte_offset,
+        store_data  => rs2_data,
 
-    ram_write_en <= '1' when mem_op = '1' and ram_en = '1'
-                and store_misaligned = '0' else '0';
+        write_mask  => store_write_mask,
+        write_data  => store_write_data
+    );
+
+
+    ram_write_en <= '1' when mem_op = '1' and ram_en = '1' else '0';
     -- === RAM (Data Memory) ===
     ram_inst: entity work.ram
         port map (
             clk        => clk,
             addr       => ram_addr,
             write_en   => ram_write_en,
-            write_data => rs2_data,
-            write_mask => write_mask,
+            write_data => store_write_data,
+            write_mask => store_write_mask,
             read_data  => ram_read_data
         );
 
@@ -247,11 +251,13 @@ begin
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (
-            read_mask     => read_mask,
-            is_unsigned   => is_unsigned,
-            mem_data      => mem_data,
-            loaded_value  => loaded_value
+            funct3       => funct3,
+            is_unsigned  => is_unsigned,
+            byte_offset  => byte_offset,
+            mem_data     => mem_data,
+            loaded_value => loaded_value
         );
+
 
     -- === Writeback Mux ===
     mux_wb_inst: entity work.mux_wb
