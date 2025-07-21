@@ -19,7 +19,7 @@ architecture Behavioral of tb_top is
     signal reset : std_logic := '1';
 
     -- Clock period
-    constant clk_period : time := 10 ns;
+    constant clk_period : time :=  2500 ps;
 
 begin
 

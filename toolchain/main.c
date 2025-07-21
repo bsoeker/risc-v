@@ -1,6 +1,17 @@
 #include <stdint.h>
+
+#define UART_BASE 0x20000000
+#define UART_TX (*(volatile uint32_t *)(UART_BASE + 0x00))
+#define UART_STAT (*(volatile uint32_t *)(UART_BASE + 0x04))
+
+void delay() {
+  for (volatile int i = 0; i < 10000; i++)
+    ;
+}
+
 int main() {
-  // Your bare-metal code
-  *((volatile uint32_t *)0x20000000) = 'H';
-  return 1;
+  uint32_t status_bit = UART_STAT & 0x1; // read tx_ready bit
+  char probe_char = 'A' + status_bit;    // 'A' if 0, 'B' if 1
+  UART_TX = probe_char;                  // send it out
+  return 0;
 }

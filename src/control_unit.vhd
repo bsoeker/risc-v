@@ -17,7 +17,6 @@ entity control_unit is
         imm_type     : out std_logic_vector(2 downto 0);
         jump         : out std_logic;
         branch       : out std_logic;
-        is_unsigned  : out std_logic; -- for load_unit
         stall        : out std_logic -- stall flag for RAM LOAD instructions
 
     );
@@ -37,7 +36,6 @@ begin
         imm_type     <= "000";
         jump         <= '0';
         branch       <= '0';
-        is_unsigned  <= '0';
         stall        <= '0';
 
         case opcode is
@@ -104,8 +102,6 @@ begin
                 mem_op       <= '0'; -- read
                 wb_sel       <= "01";
                 imm_type     <= "000"; -- I-type
-                is_unsigned  <=
-                    '1' when funct3 = "100" or funct3 = "101" else '0';
 
             -- Store
             when "0100011" => -- SW

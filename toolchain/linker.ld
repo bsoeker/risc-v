@@ -15,13 +15,19 @@ SECTIONS {
     } > ROM
 
     .data : {
+        _sdata = .;
         *(.data*)
-    } > RAM
+        _edata = .;
+    } > RAM AT > ROM
 
     .bss : {
+        _sbss = .;
         *(.bss*)
         *(COMMON)
+        _ebss = .;
     } > RAM
+
+    _sidata = LOADADDR(.data);
 
     . = ORIGIN(RAM) + LENGTH(RAM);
     _stack_top = .;

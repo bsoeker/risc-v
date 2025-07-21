@@ -74,7 +74,6 @@ architecture Behavioral of top is
     signal jump        : std_logic;
     signal branch      : std_logic;
     signal read_mask   : std_logic_vector(3 downto 0);
-    signal is_unsigned : std_logic;
     signal stall       : std_logic; -- from control unit
 
     signal stall_active : std_logic;  -- Whether we're currently in a stall
@@ -198,7 +197,6 @@ begin
             imm_type    => imm_type,
             jump        => jump,
             branch      => branch,
-            is_unsigned => is_unsigned,
             stall       => stall
         );
 
@@ -301,7 +299,6 @@ begin
     load_unit_inst: entity work.load_unit
         port map (
             funct3       => funct3,
-            is_unsigned  => is_unsigned,
             byte_offset  => byte_offset,
             mem_data     => mem_data,
             loaded_value => loaded_value
