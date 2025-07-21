@@ -6,7 +6,8 @@ entity top is
     Port (
         clk   : in  std_logic;
         reset : in  std_logic;
-        RsTx  : out std_logic
+        RsTx  : out std_logic;
+        led   : out std_logic_vector(15 downto 0)
     );
 end top;
 
@@ -79,11 +80,46 @@ architecture Behavioral of top is
     signal stall_active : std_logic;  -- Whether we're currently in a stall
     signal stall_delay  : std_logic;  -- Whether we just started the stall
 
+    -- Clock Divider
+    signal slow_clk : std_logic;
+    -- Sync external reset into slow_clk domain
+    signal internal_reset : std_logic;
+    signal reset_sync_0 : std_logic := '1';
+    signal reset_sync_1 : std_logic := '1';
+
 begin
-    process(clk)
+
+    -- Clock Divider
+    clkdiv_inst: entity work.clock_divider
+        generic map (
+            DIVIDE_BY => 2  -- each toggle = 2 cycles, full period = 4 → 25 MHz
+        )
+        port map (
+            clk_in  => clk,
+            reset   => '0',
+            clk_out => slow_clk
+        );
+
+    process(slow_clk)
     begin
-        if rising_edge(clk) then
-            if reset = '1' then
+        if rising_edge(slow_clk) then
+            reset_sync_0 <= reset;
+            reset_sync_1 <= reset_sync_0;
+        end if;
+    end process;
+    
+    internal_reset <= reset_sync_1;
+
+
+    process(slow_clk)
+    begin
+        led(0) <= slow_clk;
+    end process;
+
+    process(slow_clk)
+    begin
+        if rising_edge(slow_clk) then
+            if internal_reset = '1' then
                 stall_active <= '0';
                 stall_delay  <= '0';
             else
@@ -126,8 +162,8 @@ begin
     -- === Program Counter ===
     pc_unit: entity work.ProgramCounter
         port map (
-            clk    => clk,
-            reset  => reset,
+            clk    => slow_clk,
+            reset  => internal_reset,
             pc_in  => next_pc,  -- For jumps and branches
             pc_out => pc
         );
@@ -169,7 +205,7 @@ begin
     -- === Register File ===
     regfile_inst: entity work.reg_file
         port map (
-            clk       => clk,
+            clk       => slow_clk,
             rs1_addr  => rs1_addr,
             rs2_addr  => rs2_addr,
             rd_addr   => rd_addr,
@@ -239,7 +275,7 @@ begin
     -- === RAM (Data Memory) ===
     ram_inst: entity work.ram
         port map (
-            clk        => clk,
+            clk        => slow_clk,
             addr       => ram_addr,
             write_en   => ram_write_en,
             write_data => store_write_data,
@@ -251,8 +287,8 @@ begin
     -- === UART ===
     uart_inst: entity work.uart
         port map (
-            clk         => clk,
-            reset       => reset,
+            clk         => slow_clk,
+            reset       => internal_reset,
             addr        => uart_addr,
             wr_en       => uart_write_en,
             write_data  => rs2_data,
