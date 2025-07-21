@@ -4,21 +4,22 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity control_unit is
     Port (
-        opcode      : in  std_logic_vector(6 downto 0);
-        funct3      : in  std_logic_vector(2 downto 0);
-        funct7      : in  std_logic_vector(6 downto 0);
+        opcode       : in  std_logic_vector(6 downto 0);
+        funct3       : in  std_logic_vector(2 downto 0);
+        funct7       : in  std_logic_vector(6 downto 0);
 
-        alu_control : out std_logic_vector(3 downto 0);
-        alu_src_a   : out std_logic_vector(1 downto 0); -- 00 = reg, 01 = PC, 10 = 0x00000000
-        alu_src_b   : out std_logic; -- 0 = reg, 1 = imm
-        reg_write   : out std_logic;
-        mem_op      : out std_logic; -- 0 = read, 1 = write
-        wb_sel      : out std_logic_vector(1 downto 0);
-        imm_type    : out std_logic_vector(2 downto 0);
-        jump        : out std_logic;
-        branch      : out std_logic;
-        is_unsigned : out std_logic; -- for load_unit
-        stall       : out std_logic -- stall flag for RAM LOAD instructions
+        alu_control  : out std_logic_vector(3 downto 0);
+        alu_src_a    : out std_logic_vector(1 downto 0); -- 00 = reg, 01 = PC, 10 = 0x00000000
+        alu_src_b    : out std_logic; -- 0 = reg, 1 = imm
+        reg_write    : out std_logic;
+        mem_op       : out std_logic; -- 0 = read, 1 = write
+        wb_sel       : out std_logic_vector(1 downto 0);
+        imm_type     : out std_logic_vector(2 downto 0);
+        jump         : out std_logic;
+        branch       : out std_logic;
+        is_unsigned  : out std_logic; -- for load_unit
+        stall        : out std_logic -- stall flag for RAM LOAD instructions
+
     );
 end control_unit;
 
@@ -27,17 +28,17 @@ begin
     process(opcode, funct3, funct7)
     begin
         -- Set defaults
-        alu_control <= "0000";
-        alu_src_a   <= "00";
-        alu_src_b   <= '0';
-        reg_write   <= '0';
-        mem_op      <= '0';
-        wb_sel      <= "00";
-        imm_type    <= "000";
-        jump        <= '0';
-        branch      <= '0';
-        is_unsigned <= '0';
-        stall       <= '0';
+        alu_control  <= "0000";
+        alu_src_a    <= "00";
+        alu_src_b    <= '0';
+        reg_write    <= '0';
+        mem_op       <= '0';
+        wb_sel       <= "00";
+        imm_type     <= "000";
+        jump         <= '0';
+        branch       <= '0';
+        is_unsigned  <= '0';
+        stall        <= '0';
 
         case opcode is
 
@@ -95,15 +96,15 @@ begin
 
             -- Load
             when "0000011" => -- LW
-                stall       <= '1';
-                alu_src_a   <= "00";
-                alu_src_b   <= '1';
-                alu_control <= "0000"; -- ADD
-                reg_write   <= '1';
-                mem_op      <= '0'; -- read
-                wb_sel      <= "01";
-                imm_type    <= "000"; -- I-type
-                is_unsigned <=
+                stall        <= '1';
+                alu_src_a    <= "00";
+                alu_src_b    <= '1';
+                alu_control  <= "0000"; -- ADD
+                reg_write    <= '1';
+                mem_op       <= '0'; -- read
+                wb_sel       <= "01";
+                imm_type     <= "000"; -- I-type
+                is_unsigned  <=
                     '1' when funct3 = "100" or funct3 = "101" else '0';
 
             -- Store

@@ -76,21 +76,34 @@ architecture Behavioral of top is
     signal is_unsigned : std_logic;
     signal stall       : std_logic; -- from control unit
 
-    signal stall_reg   : std_logic := '0'; -- to hold the stall state
+    signal stall_active : std_logic;  -- Whether we're currently in a stall
+    signal stall_delay  : std_logic;  -- Whether we just started the stall
 
 begin
     process(clk)
     begin
         if rising_edge(clk) then
             if reset = '1' then
-                stall_reg <= '0';
-            elsif stall = '1' then
-                stall_reg <= '1';
+                stall_active <= '0';
+                stall_delay  <= '0';
             else
-                stall_reg <= '0'; -- One cycle only
+                -- First time we see a stall, activate for one cycle
+                if stall = '1' and stall_active = '0' then
+                    stall_active <= '1';
+                    stall_delay  <= '1';
+                -- Stall already active, deactivate
+                elsif stall_active = '1' then
+                    stall_active <= '0';
+                    stall_delay  <= '0';
+                -- Normal case
+                else
+                    stall_delay <= '0';
+                end if;
             end if;
         end if;
     end process;
+
+
 
     pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
     jalr_target   <= alu_result and x"FFFFFFFE";  -- Clear LSB for JALR
@@ -104,7 +117,7 @@ begin
         (funct3 = "111" and alu_result = x"00000000")    -- BGEU
     ) else '0';
 
-    next_pc <= pc when (stall = '1' and stall_reg = '0') else
+    next_pc <= pc when stall = '1' and stall_delay = '0' else
         jalr_target   when (jump = '1' and opcode = "1100111") else
         alu_result    when (jump = '1') else
         branch_target when (branch_taken = '1') else
