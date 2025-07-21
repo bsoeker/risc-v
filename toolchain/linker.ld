@@ -17,7 +17,7 @@ SECTIONS {
     .data : {
         _sdata = .;
         *(.data*)
-        *(.sdata*)     /* <--- ADD THIS LINE */
+        *(.sdata*)  
         _edata = .;
     } > RAM AT > ROM
     _sidata = LOADADDR(.data);
