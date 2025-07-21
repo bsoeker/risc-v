@@ -9,10 +9,10 @@ _start:
     la a2, _edata      # RAM end of .data
 1:
     beq a1, a2, 2f
-    lw t0, 0(a0)
-    sw t0, 0(a1)
-    addi a0, a0, 4
-    addi a1, a1, 4
+    lbu t0, 0(a0)
+    sb  t0, 0(a1)
+    addi a0, a0, 1
+    addi a1, a1, 1
     j 1b
 2:
 

@@ -17,8 +17,11 @@ SECTIONS {
     .data : {
         _sdata = .;
         *(.data*)
+        *(.sdata*)     /* <--- ADD THIS LINE */
         _edata = .;
     } > RAM AT > ROM
+    _sidata = LOADADDR(.data);
+
 
     .bss : {
         _sbss = .;
