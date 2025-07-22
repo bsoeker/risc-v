@@ -8,12 +8,17 @@ entity address_decoder is
         ram_en       : out std_logic;
         ram_addr     : out std_logic_vector(11 downto 0);  -- 4KB RAM
         uart_en      : out std_logic;
-        uart_addr    : out std_logic_vector(1 downto 0)     -- select data/status
+        uart_addr    : out std_logic_vector(1 downto 0);     -- select data/status
+        rom_en       : out std_logic;
+        rom_addr     : out std_logic_vector(11 downto 0)  -- 4KB RAM
     );
 end address_decoder;
 
 architecture Behavioral of address_decoder is
 begin
+    -- ROM: 0x00000000 - 0x00000FFF
+    rom_en <= '1' when addr(31 downto 12) = x"00000" else '0';
+    rom_addr <= addr(11 downto 0);
 
     -- RAM: 0x10000000 – 0x10000FFF
     ram_en   <= '1' when addr(31 downto 12) = x"10000" else '0';

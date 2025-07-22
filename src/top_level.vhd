@@ -56,6 +56,10 @@ architecture Behavioral of top is
     signal ram_addr         : std_logic_vector(11 downto 0);
     signal store_write_data : std_logic_vector(31 downto 0);
     signal store_write_mask : std_logic_vector(3 downto 0);
+    signal rom_en           : std_logic;
+    signal rom_addr         : std_logic_vector(11 downto 0);
+    signal rom_read_data    : std_logic_vector(31 downto 0);
+
 
     -- UART
     signal uart_en        : std_logic;
@@ -170,8 +174,10 @@ begin
     -- === Instruction ROM ===
     rom_inst: entity work.rom
         port map (
-            addr => pc(9 downto 0),
-            data => instr
+            instr_addr => pc(11 downto 0),
+            instr_data => instr,
+            data_addr  => rom_addr,
+            data_data  => rom_read_data
         );
 
     -- === Decode Fields ===
@@ -254,7 +260,9 @@ begin
         ram_en    => ram_en,
         ram_addr  => ram_addr,
         uart_en   => uart_en,
-        uart_addr => uart_addr
+        uart_addr => uart_addr,
+        rom_en    => rom_en,
+        rom_addr  => rom_addr
     );
 
     byte_offset <= alu_result(1 downto 0);
@@ -294,7 +302,9 @@ begin
             RsTx        => RsTx
         );
 
-    mem_data <= ram_read_data when ram_en = '1' else uart_read_data;
+    mem_data <= ram_read_data when ram_en = '1' else 
+                uart_read_data when uart_en = '1' else
+                rom_read_data when rom_en = '1';
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (

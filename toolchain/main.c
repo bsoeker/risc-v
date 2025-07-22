@@ -6,9 +6,12 @@
 
 char str[] __attribute__((section(".data"))) = "Hello";
 
+void delay() {
+  for (int i = 0; i < 1000000; i++) {
+  }
+}
+
 int main() {
-  uint32_t status_bit = UART_STAT & 0x1; // read tx_ready bit
-  char probe_char = 'A' + status_bit;    // 'A' if 0, 'B' if 1
-  UART_TX = probe_char;                  // send it out
+  UART_TX = str[0];
   return 0;
 }

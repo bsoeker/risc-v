@@ -14,13 +14,14 @@ SECTIONS {
         *(.rodata*)
     } > ROM
 
-    .data : {
+    .data : AT(ADDR(.text) + SIZEOF(.text)) {
         _sdata = .;
         *(.data*)
-        *(.sdata*)  
+        *(.sdata*)
         _edata = .;
-    } > RAM AT > ROM
+    } > RAM
     _sidata = LOADADDR(.data);
+
 
 
     .bss : {
