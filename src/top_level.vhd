@@ -7,7 +7,8 @@ entity top is
         clk   : in  std_logic;
         reset : in  std_logic;
         RsTx  : out std_logic;
-        led   : out std_logic_vector(15 downto 0)
+        led   : out std_logic_vector(15 downto 0);
+        JA    : out std_logic_vector(7 downto 0)
     );
 end top;
 
@@ -117,6 +118,10 @@ begin
     process(slow_clk)
     begin
         led(0) <= slow_clk;
+        JA(1)    <= slow_clk;
+        JA(2)    <= slow_clk;
+        JA(3)    <= slow_clk;
+        JA(0)    <= slow_clk;
     end process;
 
     process(slow_clk)
