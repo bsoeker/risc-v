@@ -19,15 +19,14 @@ architecture Behavioral of uart is
     constant BAUD_RATE  : integer := 115200;
     constant BAUD_TICKS : integer := CLOCK_FREQ / BAUD_RATE;
 
-    type state_type is (IDLE, START, DATA, STOP, WAIT_IDLE);
+    type state_type is (IDLE, START, DATA, STOP);
     signal state         : state_type := IDLE;
     signal bit_index     : integer range 0 to 7 := 0;
     signal baud_counter  : integer := 0;
     signal shift_reg     : std_logic_vector(7 downto 0);
     signal tx_reg        : std_logic := '1';
 
-    signal tx_ready_raw  : std_logic := '0';
-    signal tx_ready_sync : std_logic := '0';
+    signal tx_ready      : std_logic := '0';
 
     signal uart_wr_en    : std_logic;
     signal uart_data     : std_logic_vector(7 downto 0);
@@ -38,16 +37,8 @@ begin
     -- Output TX pin
     RsTx <= tx_reg;
 
-    -- FSM Ready flag (raw and synced)
-    tx_ready_raw <= '1' when state = IDLE else '0';
-
-    -- Synchronize tx_ready to be safe on CPU read
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            tx_ready_sync <= tx_ready_raw;
-        end if;
-    end process;
+    -- FSM Ready flag 
+    tx_ready <= '1' when state = IDLE else '0';
 
     -- UART TX FSM
     process(clk)
@@ -94,13 +85,11 @@ begin
                         if baud_counter = BAUD_TICKS - 1 then
                             baud_counter <= 0;
                             tx_reg <= '1'; -- Stop bit
-                            state <= WAIT_IDLE;
+                            state <= IDLE;
                         else
                             baud_counter <= baud_counter + 1;
                         end if;
 
-                    when WAIT_IDLE =>
-                        state <= IDLE;
                 end case;
             end if;
         end if;
@@ -110,7 +99,7 @@ begin
     uart_data  <= write_data(7 downto 0);
 
     -- Allow write only when TX is ready
-    uart_wr_en <= '1' when (wr_en = '1' and addr = "00" and tx_ready_sync = '1') else '0';
+    uart_wr_en <= '1' when (wr_en = '1' and addr = "00" and tx_ready = '1') else '0';
 
     -- MMIO read response (latched)
     process(clk)
@@ -123,7 +112,7 @@ begin
                     when "00" =>  -- TX register (dummy read)
                         read_data_reg <= (others => '0');
                     when "01" =>  -- STATUS register
-                        read_data_reg <= (31 downto 1 => '0') & tx_ready_sync;
+                        read_data_reg <= (31 downto 1 => '0') & tx_ready;
                     when others =>
                         read_data_reg <= (others => '0');
                 end case;
