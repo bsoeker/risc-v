@@ -12,16 +12,10 @@ def format_rom_vhdl(mem_file_path, output_path="build/rom_init.txt", addr_offset
         line = line.strip()
         if not line:
             continue
-        word = int(line, 16)
-        bytes_le = [
-            (word >> (8 * i)) & 0xFF for i in range(4)
-        ]  # Little-endian
+        output.append(f'    {addr} => x"{line.upper()}",')
+        addr += 1  # increment by word size
 
-        for b in bytes_le:
-            output.append(f'    {addr} => x"{b:02X}",')
-            addr += 1
-
-    output.append('    others => x"00"')
+    output.append('    others => x"00000000"')
 
     with open(output_path, 'w') as f_out:
         f_out.write('\n'.join(output))

@@ -14,14 +14,13 @@ SECTIONS {
         *(.rodata*)
     } > ROM
 
-    .data : AT(ADDR(.text) + SIZEOF(.text)) {
-        _sdata = .;
-        *(.data*)
-        *(.sdata*)
-        _edata = .;
-    } > RAM
+    .data : {
+      _sdata = .;
+      *(.data*)
+      *(.sdata*)
+      _edata = .;
+    } > RAM AT > ROM
     _sidata = LOADADDR(.data);
-
 
 
     .bss : {
@@ -30,8 +29,6 @@ SECTIONS {
         *(COMMON)
         _ebss = .;
     } > RAM
-
-    _sidata = LOADADDR(.data);
 
     . = ORIGIN(RAM) + LENGTH(RAM);
     _stack_top = .;
