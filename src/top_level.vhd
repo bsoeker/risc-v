@@ -63,10 +63,22 @@ architecture Behavioral of top is
 
 
     -- UART
-    signal uart_en        : std_logic;
     signal uart_addr      : std_logic_vector(1 downto 0);
+    signal uart_en        : std_logic;
     signal uart_read_data : std_logic_vector(31 downto 0);
     signal uart_write_en  : std_logic;
+
+    -- SPI
+    signal spi_addr      : std_logic_vector(1 downto 0);
+    signal spi_en        : std_logic;
+    signal spi_start     : std_logic;
+    signal spi_miso      : std_logic;
+    signal spi_read_data : std_logic_vector(7 downto 0);
+    signal spi_rx_reg    : std_logic_vector(7 downto 0) := (others => '0');
+    signal spi_done      : std_logic;
+    signal spi_done_reg  : std_logic := '0';
+
+
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -113,16 +125,6 @@ begin
     end process;
     
     internal_reset <= reset_sync_1;
-
-
-    process(slow_clk)
-    begin
-        led(0) <= slow_clk;
-        JA(1)    <= slow_clk;
-        JA(2)    <= slow_clk;
-        JA(3)    <= slow_clk;
-        JA(0)    <= slow_clk;
-    end process;
 
     process(slow_clk)
     begin
@@ -267,7 +269,9 @@ begin
         uart_en   => uart_en,
         uart_addr => uart_addr,
         rom_en    => rom_en,
-        rom_addr  => rom_addr
+        rom_addr  => rom_addr,
+        spi_en    => spi_en,
+        spi_addr  => spi_addr
     );
 
     byte_offset <= alu_result(1 downto 0);
@@ -307,9 +311,42 @@ begin
             RsTx        => RsTx
         );
 
+    spi_start <= '1' when mem_op = '1' and spi_en = '1' and spi_addr = "00" else '0';
+    JA(4) <= reset;
+    spi_master_inst: entity work.spi_master
+        port map (
+            clk       => slow_clk,
+            reset     => JA(4),
+            spi_en    => spi_en,
+            start     => spi_start,
+            mosi_data => store_write_data,
+            miso      => JA(3),
+            mosi      => JA(2),
+            sclk      => JA(0),
+            scs       => JA(1),
+            done      => spi_done,
+            rx_data   => spi_read_data
+        );
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '1' then
+                spi_rx_reg   <= (others => '0');
+                spi_done_reg <= '0';
+            else
+                if spi_done = '1' then
+                    spi_rx_reg   <= spi_read_data;
+                    spi_done_reg <= '1';
+                end if;
+            end if;
+        end if;
+    end process;
+
     mem_data <= ram_read_data when ram_en = '1' else 
                 uart_read_data when uart_en = '1' else
-                rom_read_data when rom_en = '1';
+                rom_read_data when rom_en = '1' else
+                x"000000" & spi_rx_reg when spi_en = '1' and spi_addr = "01" else
+                x"0000000" & "000" & spi_done_reg when spi_en = '1' and spi_addr = "10";
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (

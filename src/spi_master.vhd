@@ -6,12 +6,13 @@ entity spi_master is
     Port (
         clk       : in  std_logic;  -- 25 MHz system clock
         reset     : in  std_logic;
+        spi_en    : in  std_logic;
         start     : in  std_logic;  -- start signal from CPU
-        mosi_data : in  std_logic_vector(7 downto 0);  -- data to send
+        mosi_data : in  std_logic_vector(31 downto 0);  -- data to send, only first 8 bits to be used
         miso      : in  std_logic;  -- data from slave
         mosi      : out std_logic;  -- data to slave
         sclk      : out std_logic;  -- SPI clock
-        cs        : out std_logic;  -- active-low chip select
+        scs       : out std_logic;  -- active-low chip select
         done      : out std_logic;  -- 1 when transfer finishes
         rx_data   : out std_logic_vector(7 downto 0) -- received data
     );
@@ -25,7 +26,8 @@ architecture Behavioral of spi_master is
     signal shift_tx   : std_logic_vector(7 downto 0) := (others => '0');
     signal shift_rx   : std_logic_vector(7 downto 0) := (others => '0');
     signal sclk_int   : std_logic := '0';
-    signal state      : (IDLE, TRANSFER, DONE) := IDLE;
+    type state_type is (IDLE, TRANSFER, DONE_STATE);
+    signal state      : state_type := IDLE;
 
 begin
 
@@ -40,7 +42,7 @@ begin
                 shift_rx   <= (others => '0');
                 sclk_int   <= '0';
                 sclk       <= '0';
-                cs         <= '1';
+                scs        <= '1';
                 mosi       <= '0';
                 done       <= '0';
                 rx_data    <= (others => '0');
@@ -50,7 +52,7 @@ begin
                 ---------------------------
                 -- Clock Divider
                 ---------------------------
-                if clk_count = 11 then  -- divide 25MHz by 12 = ~2MHz
+                if clk_count = 11 then  -- divide 25MHz by 12 = ~2MHz -- subject to change
                     clk_en <= '1';
                     clk_count <= (others => '0');
                 else
@@ -64,15 +66,15 @@ begin
                 case state is
 
                     when IDLE =>
-                        cs <= '1';
+                        scs  <= '1';
                         sclk <= '0';
                         done <= '0';
-                        if start = '1' then
-                            shift_tx <= mosi_data;
+                        if start = '1' and spi_en = '1' then
+                            shift_tx <= mosi_data(7 downto 0);
                             shift_rx <= (others => '0');
                             bit_cnt  <= (others => '0');
                             state <= TRANSFER;
-                            cs <= '0';  -- activate slave
+                            scs <= '0';  -- activate slave
                         end if;
 
                     when TRANSFER =>
@@ -89,15 +91,15 @@ begin
                                 -- Rising edge: sample MISO
                                 shift_rx <= shift_rx(6 downto 0) & miso;
                                 if bit_cnt = 7 then
-                                    state <= DONE;
+                                    state <= DONE_STATE;
                                 else
                                     bit_cnt <= bit_cnt + 1;
                                 end if;
                             end if;
                         end if;
 
-                    when DONE =>
-                        cs <= '1';
+                    when DONE_STATE =>
+                        scs <= '1';
                         done <= '1';
                         rx_data <= shift_rx;
                         state <= IDLE;

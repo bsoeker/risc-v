@@ -18,8 +18,8 @@ architecture Behavioral of tb_top is
     signal clk   : std_logic := '0';
     signal reset : std_logic := '1';
 
-    -- Clock period
-    constant clk_period : time :=  2500 ps;
+    -- Clock period: 25 MHz -> 40 ns period
+    constant clk_period : time := 2500 ps;
 
 begin
 
@@ -33,11 +33,11 @@ begin
     -- Clock generation
     clk_process : process
     begin
-        while now < 1000 ns loop
+        while now < 5000 ns loop
             clk <= '0';
-            wait for clk_period / 2;
+            wait for clk_period / 2;  -- 20 ns
             clk <= '1';
-            wait for clk_period / 2;
+            wait for clk_period / 2;  -- 20 ns
         end loop;
         wait;
     end process;
@@ -45,12 +45,10 @@ begin
     -- Reset sequence
     stim_proc: process
     begin
-        -- Assert reset
         wait for 20 ns;
-        reset <= '0';  -- Deassert reset after 2 cycles
+        reset <= '0';  -- Deassert reset after half a clock cycle
 
-        -- Let the CPU run
-        wait for 1000 ns;
+        wait for 5000 ns;
         wait;
     end process;
 

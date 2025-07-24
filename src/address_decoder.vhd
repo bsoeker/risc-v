@@ -10,7 +10,9 @@ entity address_decoder is
         uart_en      : out std_logic;
         uart_addr    : out std_logic_vector(1 downto 0);     -- select data/status
         rom_en       : out std_logic;
-        rom_addr     : out std_logic_vector(11 downto 0)  -- 4KB RAM
+        rom_addr     : out std_logic_vector(11 downto 0);  -- 4KB RAM
+        spi_en       : out std_logic;
+        spi_addr     : out std_logic_vector(1 downto 0) -- select data/status
     );
 end address_decoder;
 
@@ -28,5 +30,8 @@ begin
     uart_en   <= '1' when addr(31 downto 12) = x"20000" else '0';
     uart_addr <= addr(3 downto 2);  -- extract UART register address (00 = data, 01 = status)
 
+    -- SPI: 0x30000000, 0x30000004, 0x30000008
+    spi_en    <= '1' when addr(31 downto 4) = x"3000000" else '0';
+    spi_addr  <= addr(3 downto 2); -- 00 = TX, 01 = RX, 10 = DONE_STATUS
 end Behavioral;
 
