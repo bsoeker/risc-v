@@ -72,7 +72,6 @@ architecture Behavioral of top is
     signal spi_addr      : std_logic_vector(1 downto 0);
     signal spi_en        : std_logic;
     signal spi_start     : std_logic;
-    -- signal spi_miso      : std_logic;
     signal spi_read_data : std_logic_vector(7 downto 0);
     signal spi_rx_reg    : std_logic_vector(7 downto 0) := (others => '0');
     signal spi_done      : std_logic;
@@ -103,20 +102,20 @@ architecture Behavioral of top is
     signal reset_sync_0 : std_logic := '1';
     signal reset_sync_1 : std_logic := '1';
 
-    ------------------------------------------------------------------
---  Internal SPI lines
-------------------------------------------------------------------
-signal spi_sclk  : std_logic;
-signal spi_cs_n  : std_logic;   -- active-low
-signal spi_mosi  : std_logic;
-signal spi_miso  : std_logic;   -- driven by fake slave in sim
+--     ------------------------------------------------------------------
+-- --  Internal SPI lines
+-- ------------------------------------------------------------------
+-- signal spi_sclk  : std_logic;
+-- signal spi_cs_n  : std_logic;   -- active-low
+-- signal spi_mosi  : std_logic;
+-- signal spi_miso  : std_logic;   -- driven by fake slave in sim
 
 ------------------------------------------------------------------
 --  Fake-slave process (runs in same 25 MHz domain)
 ------------------------------------------------------------------
-signal bit_idx   : integer range 0 to 7 := 0;
-signal last_sclk : std_logic := '0';
-constant test_byte : std_logic_vector(7 downto 0) := "00000100";
+-- signal bit_idx   : integer range 0 to 7 := 0;
+-- signal last_sclk : std_logic := '0';
+-- constant test_byte : std_logic_vector(7 downto 0) := "00000100";
 
 -- holds the base address during a multi‑cycle load
 signal load_addr_latch : std_logic_vector(31 downto 0) := (others=>'0');
@@ -128,34 +127,34 @@ signal effective_addr  : std_logic_vector(31 downto 0) := (others => '0');
 
 begin
 
-    fake_slave : process(slow_clk)
-begin
-    if rising_edge(slow_clk) then
-        if spi_cs_n = '0' then                        -- CS active (low)
-
-            -- *** Always put current bit on the bus while SCLK is LOW ***
-            if spi_sclk = '0' then
-                spi_miso <= test_byte(7 - bit_idx);   -- hold MSB..LSB
-            end if;
-
-            -- Detect falling edge of SCLK (1 → 0)
-            if spi_sclk = '0' and last_sclk = '1' then
-                -- advance to next bit AFTER the falling edge
-                if bit_idx = 7 then
-                    bit_idx <= 0;            -- wrap for next transfer
-                else
-                    bit_idx <= bit_idx + 1;
-                end if;
-            end if;
-
-        else                                          -- CS high → idle
-            spi_miso <= 'Z';          -- release the line
-            bit_idx  <= 0;            -- reset for next transaction
-        end if;
-
-        last_sclk <= spi_sclk;        -- edge detector memory
-    end if;
-end process;
+--     fake_slave : process(slow_clk)
+-- begin
+--     if rising_edge(slow_clk) then
+--         if spi_cs_n = '0' then                        -- CS active (low)
+--
+--             -- *** Always put current bit on the bus while SCLK is LOW ***
+--             if spi_sclk = '0' then
+--                 spi_miso <= test_byte(7 - bit_idx);   -- hold MSB..LSB
+--             end if;
+--
+--             -- Detect falling edge of SCLK (1 → 0)
+--             if spi_sclk = '0' and last_sclk = '1' then
+--                 -- advance to next bit AFTER the falling edge
+--                 if bit_idx = 7 then
+--                     bit_idx <= 0;            -- wrap for next transfer
+--                 else
+--                     bit_idx <= bit_idx + 1;
+--                 end if;
+--             end if;
+--
+--         else                                          -- CS high → idle
+--             spi_miso <= 'Z';          -- release the line
+--             bit_idx  <= 0;            -- reset for next transaction
+--         end if;
+--
+--         last_sclk <= spi_sclk;        -- edge detector memory
+--     end if;
+-- end process;
     -- Clock Divider
     clkdiv_inst: entity work.clock_divider
         generic map (
@@ -375,21 +374,21 @@ end process;
         );
 
     spi_start <= '1' when mem_op = '1' and spi_en = '1' and spi_addr = "00" else '0';
-    -- JA(4) <= reset;
-    spi_master_inst : entity work.spi_master
+    JA(4) <= internal_reset;
+    spi_controller_inst : entity work.spi_controller
         port map (
-            clk       => slow_clk,
-            reset     => internal_reset,
-            spi_en    => spi_en,
-            start     => spi_start,
-            mosi_data => store_write_data,
-            miso      => spi_miso,   -- ← comes from fake slave
-            mosi      => spi_mosi,   -- → produced here
-            sclk      => spi_sclk,   -- → produced here
-            scs       => spi_cs_n,   -- → produced here
-            done      => spi_done,
-            rx_data   => spi_read_data
+          clk       => slow_clk,
+          reset     => JA(4),
+          start     => spi_start,
+          mosi_data => store_write_data,
+          miso      => JA(3),
+          mosi      => JA(2),
+          scs       => JA(1),
+          sclk      => JA(0),
+          rx_data   => spi_read_data,
+          done      => spi_done
         );
+
     process(clk)
     begin
         if rising_edge(clk) then
