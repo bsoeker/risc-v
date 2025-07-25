@@ -118,6 +118,14 @@ signal bit_idx   : integer range 0 to 7 := 0;
 signal last_sclk : std_logic := '0';
 constant test_byte : std_logic_vector(7 downto 0) := "00000100";
 
+-- holds the base address during a multi‑cycle load
+signal load_addr_latch : std_logic_vector(31 downto 0) := (others=>'0');
+
+-- high during the *first* cycle of a 2‑cycle load
+signal load_phase1     : std_logic := '0';
+signal effective_addr  : std_logic_vector(31 downto 0) := (others => '0');
+
+
 begin
 
     fake_slave : process(slow_clk)
@@ -192,6 +200,15 @@ end process;
         end if;
     end process;
 
+    process(slow_clk)
+    begin
+        if rising_edge(slow_clk) then
+            if load_phase1 = '1' then
+                load_addr_latch <= rs1_data;      -- freeze 0x3000_0004
+            end if;
+        end if;
+    end process;
+
 
 
     pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
@@ -253,7 +270,8 @@ end process;
             imm_type    => imm_type,
             jump        => jump,
             branch      => branch,
-            stall       => stall
+            stall       => stall,
+            load_phase1 => load_phase1
         );
 
     -- === Register File ===
@@ -277,11 +295,13 @@ end process;
             imm_out  => imm
         );
 
+    effective_addr <= load_addr_latch when stall_active = '1'   -- 2nd cycle
+                  else rs1_data;                            -- 1st cycle or single‑cycle ops
     -- === ALU Source Muxes ===
     mux_a_inst: entity work.mux_a
         port map (
             sel    => alu_src_a,
-            rs1    => rs1_data,
+            rs1    => effective_addr,
             pc     => pc,
             result => alu_in_a
         );

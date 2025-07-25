@@ -17,8 +17,8 @@ entity control_unit is
         imm_type     : out std_logic_vector(2 downto 0);
         jump         : out std_logic;
         branch       : out std_logic;
-        stall        : out std_logic -- stall flag for RAM LOAD instructions
-
+        stall        : out std_logic; -- stall flag for RAM LOAD instructions
+        load_phase1  : out std_logic
     );
 end control_unit;
 
@@ -37,6 +37,7 @@ begin
         jump         <= '0';
         branch       <= '0';
         stall        <= '0';
+        load_phase1  <= '0';
 
         case opcode is
 
@@ -94,6 +95,7 @@ begin
 
             -- Load
             when "0000011" => -- LW
+                load_phase1  <= '1';
                 stall        <= '1';
                 alu_src_a    <= "00";
                 alu_src_b    <= '1';
