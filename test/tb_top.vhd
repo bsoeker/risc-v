@@ -33,7 +33,7 @@ begin
     -- Clock generation
     clk_process : process
     begin
-        while now < 5000 ns loop
+        while now < 10000 ns loop
             clk <= '0';
             wait for clk_period / 2;  -- 20 ns
             clk <= '1';
@@ -48,7 +48,7 @@ begin
         wait for 20 ns;
         reset <= '0';  -- Deassert reset after half a clock cycle
 
-        wait for 5000 ns;
+        wait for 10000 ns;
         wait;
     end process;
 

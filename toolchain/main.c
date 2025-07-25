@@ -7,13 +7,13 @@
 void spi_write(uint8_t val) {
     SPI_WRITE = val;
     // You *must* wait until the SPI is done before continuing!
-    for (volatile int i = 0; i < 10; i++)
+    for (volatile int i = 0; i < 20; i++)
         ; // crude delay
 }
 
 uint8_t spi_exchange(uint8_t val) {
     SPI_WRITE = val;
-    for (volatile int i = 0; i < 10; i++)
+    for (volatile int i = 0; i < 20; i++)
         ; // crude delay
     return (uint8_t)SPI_READ;
 }
@@ -24,7 +24,7 @@ int main() {
     spi_write(0x00);                  // Read control byte
     uint8_t ver = spi_exchange(0x00); // Dummy write, receive version byte
 
-    UART_TX = 'A' + ver; // Should print 0x04 if W5500 is responding
+    UART_TX = 'B' + ver; // Should print 0x04 if W5500 is responding
 
     while (1)
         ;

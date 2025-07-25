@@ -58,7 +58,7 @@ architecture rom_arch of rom is
     35 => x"00178793",
     36 => x"FEF42623",
     37 => x"FEC42703",
-    38 => x"00900793",
+    38 => x"01300793",
     39 => x"FEE7D6E3",
     40 => x"00000013",
     41 => x"00000013",
@@ -81,7 +81,7 @@ architecture rom_arch of rom is
     58 => x"00178793",
     59 => x"FEF42623",
     60 => x"FEC42703",
-    61 => x"00900793",
+    61 => x"01300793",
     62 => x"FEE7D6E3",
     63 => x"300007B7",
     64 => x"00478793",
@@ -107,12 +107,12 @@ architecture rom_arch of rom is
     84 => x"00050793",
     85 => x"FEF407A3",
     86 => x"FEF44783",
-    87 => x"04178713",
+    87 => x"04278713",
     88 => x"200007B7",
     89 => x"00E7A023",
     90 => x"0000006F",
     others => x"00000000"
-     );
+);
 
 begin
     instr_word_addr <= to_integer(shift_right(unsigned(instr_addr), 2));
