@@ -72,13 +72,10 @@ architecture Behavioral of top is
     signal spi_addr      : std_logic_vector(1 downto 0);
     signal spi_en        : std_logic;
     signal spi_start     : std_logic;
-    -- signal spi_miso      : std_logic;
     signal spi_read_data : std_logic_vector(7 downto 0);
     signal spi_rx_reg    : std_logic_vector(7 downto 0) := (others => '0');
     signal spi_done      : std_logic;
     signal spi_done_reg  : std_logic := '0';
-
-
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -103,59 +100,18 @@ architecture Behavioral of top is
     signal reset_sync_0 : std_logic := '1';
     signal reset_sync_1 : std_logic := '1';
 
-    ------------------------------------------------------------------
---  Internal SPI lines
-------------------------------------------------------------------
-signal spi_sclk  : std_logic;
-signal spi_cs_n  : std_logic;   -- active-low
-signal spi_mosi  : std_logic;
-signal spi_miso  : std_logic;   -- driven by fake slave in sim
 
-------------------------------------------------------------------
---  Fake-slave process (runs in same 25 MHz domain)
-------------------------------------------------------------------
-signal bit_idx   : integer range 0 to 7 := 0;
-signal last_sclk : std_logic := '0';
-constant test_byte : std_logic_vector(7 downto 0) := "00000100";
+constant RESET_CYCLES : integer := 15000;
+signal rst_counter    : integer range 0 to RESET_CYCLES := 0;
+signal w5500_rst_n    : std_logic := '0';  -- Active LOW reset
 
 -- holds the base address during a multi‑cycle load
 signal load_addr_latch : std_logic_vector(31 downto 0) := (others=>'0');
-
 -- high during the *first* cycle of a 2‑cycle load
 signal load_phase1     : std_logic := '0';
 signal effective_addr  : std_logic_vector(31 downto 0) := (others => '0');
 
-
 begin
-
-    fake_slave : process(slow_clk)
-begin
-    if rising_edge(slow_clk) then
-        if spi_cs_n = '0' then                        -- CS active (low)
-
-            -- *** Always put current bit on the bus while SCLK is LOW ***
-            if spi_sclk = '0' then
-                spi_miso <= test_byte(7 - bit_idx);   -- hold MSB..LSB
-            end if;
-
-            -- Detect falling edge of SCLK (1 → 0)
-            if spi_sclk = '0' and last_sclk = '1' then
-                -- advance to next bit AFTER the falling edge
-                if bit_idx = 7 then
-                    bit_idx <= 0;            -- wrap for next transfer
-                else
-                    bit_idx <= bit_idx + 1;
-                end if;
-            end if;
-
-        else                                          -- CS high → idle
-            spi_miso <= 'Z';          -- release the line
-            bit_idx  <= 0;            -- reset for next transaction
-        end if;
-
-        last_sclk <= spi_sclk;        -- edge detector memory
-    end if;
-end process;
     -- Clock Divider
     clkdiv_inst: entity work.clock_divider
         generic map (
@@ -208,8 +164,6 @@ end process;
             end if;
         end if;
     end process;
-
-
 
     pc_plus_four  <= std_logic_vector(unsigned(pc) + 4);
     jalr_target   <= alu_result and x"FFFFFFFE";  -- Clear LSB for JALR
@@ -374,21 +328,43 @@ end process;
             RsTx        => RsTx
         );
 
+    reset_gen : process(slow_clk)
+    begin
+      if rising_edge(slow_clk) then
+        if internal_reset = '1' then
+          rst_counter  <= 0;
+          w5500_rst_n  <= '0'; -- restarting reset
+        elsif rst_counter < RESET_CYCLES then
+          rst_counter  <= rst_counter + 1;
+          w5500_rst_n  <= '0'; -- still resetting
+        else
+          w5500_rst_n  <= '1'; -- done, release W5500
+        end if;
+      end if;
+    end process;
+
+    -- Connect to PMOD pin
+    JA(4) <= w5500_rst_n;
+    led(0) <= JA(0);
+    led(1) <= JA(1);
+    led(2) <= JA(2);
+    led(3) <= JA(3);
+    led(4) <= JA(4);
+
     spi_start <= '1' when mem_op = '1' and spi_en = '1' and spi_addr = "00" else '0';
-    -- JA(4) <= reset;
     spi_master_inst : entity work.spi_master
         port map (
             clk       => slow_clk,
-            reset     => internal_reset,
+            reset     => internal_reset, 
             spi_en    => spi_en,
             start     => spi_start,
             mosi_data => store_write_data,
-            miso      => spi_miso,   -- ← comes from fake slave
-            mosi      => spi_mosi,   -- → produced here
-            sclk      => spi_sclk,   -- → produced here
-            scs       => spi_cs_n,   -- → produced here
+            miso      => JA(3),   -- ← comes from fake slave
+            mosi      => JA(2),   -- → produced here
+            sclk      => JA(0),   -- → produced here
+            scs       => JA(1),   -- → produced here
             done      => spi_done,
-            rx_data   => spi_read_data
+            rx_data   => led(15 downto 8)
         );
     process(clk)
     begin
@@ -431,4 +407,5 @@ end process;
         );
 
 end Behavioral;
+
 
