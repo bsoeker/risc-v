@@ -4,11 +4,15 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity top is
     Port (
-        clk   : in  std_logic;
-        reset : in  std_logic;
-        RsTx  : out std_logic;
-        led   : out std_logic_vector(15 downto 0);
-        JA    : out std_logic_vector(7 downto 0)
+        clk         : in  std_logic;
+        reset       : in  std_logic;
+        RsTx        : out std_logic;
+        led         : out std_logic_vector(15 downto 0);
+        sclk        : out std_logic;
+        scs         : out std_logic;
+        mosi        : out std_logic;
+        -- miso        : in std_logic;
+        reset_slave : out std_logic
     );
 end top;
 
@@ -342,13 +346,7 @@ begin
     end process;
 
     -- Connect to PMOD pin
-    JA(4) <= w5500_rst_n;
-
-    led(0) <= JA(0);
-    led(1) <= JA(1);
-    led(2) <= JA(2);
-    led(3) <= JA(3);
-    led(4) <= JA(4);
+    reset_slave <= w5500_rst_n;
 
     spi_start <= '1' when mem_op = '1' and spi_en = '1' and spi_addr = "00" else '0';
     spi_master_inst : entity work.spi_master
@@ -359,11 +357,13 @@ begin
             tx_data   => store_write_data,
             done      => spi_done,
             rx_data   => spi_read_data,
-            sclk      => JA(0), 
-            mosi      => JA(2), 
-            miso      => JA(3), 
-            cs        => JA(1)   
+            sclk      => sclk, -- JA(0), 
+            mosi      => mosi, -- JA(2), 
+            miso      => '1', -- JA(3), 
+            cs        => scs   -- JA(1)   
         );
+
+    led(15 downto 0) <= spi_read_data(15 downto 0);
 
     mem_data <= ram_read_data when ram_en = '1' else 
                 uart_read_data when uart_en = '1' else

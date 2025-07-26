@@ -7,7 +7,12 @@
 void spi_write(uint32_t val) { SPI_WRITE = val; }
 
 int main() {
-    spi_write(0x00390011);
+    spi_write(0x00390000);
+    for (int i = 0; i < 25000000; i++) {
+    }
+
+    uint32_t read_value = SPI_READ;
+    UART_TX = 'A' + read_value;
 
     return 0;
 }

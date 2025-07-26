@@ -21,7 +21,7 @@ end spi_master;
 
 architecture Behavioral of spi_master is
 
-    type state_type is (IDLE, ASSERT_CS, TRANSFER, DONE_STATE);
+    type state_type is (IDLE, ASSERT_CS, PREPARE_TRANSFER, TRANSFER, DONE_STATE);
     signal state      : state_type := IDLE;
 
     signal shift_tx   : std_logic_vector(31 downto 0) := (others => '0');
@@ -34,6 +34,7 @@ architecture Behavioral of spi_master is
     signal sclk_rise  : std_logic := '0';
     signal sclk_fall  : std_logic := '0';
 
+    signal reset_clk_count : std_logic := '0';
     signal tx_latch   : std_logic_vector(31 downto 0) := (others => '0');
     signal cs_int     : std_logic := '1';
 
@@ -46,85 +47,98 @@ begin
     rx_data <= shift_rx;
 
     -- Clock divider for SPI clock with rise/fall detection
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            sclk_rise <= '0';
-            sclk_fall <= '0';
+process(clk)
+begin
+    if rising_edge(clk) then
+        sclk_rise <= '0';
+        sclk_fall <= '0';
 
-            if state = TRANSFER then
-                if clk_count = CLK_DIV - 1 then
-                    clk_count  <= clk_count + 1;
-                    sclk_int   <= '0';
-                    sclk_fall  <= '1';
-                elsif clk_count = (CLK_DIV * 2) - 1 then
-                    clk_count  <= 0;
-                    sclk_int   <= '1';
-                    sclk_rise  <= '1';
-                else
-                    clk_count <= clk_count + 1;
-                end if;
-            else
-                clk_count  <= 0;
+        if reset_clk_count = '1' then
+            clk_count  <= 0;
+            sclk_int   <= '1';
+        elsif state = TRANSFER then
+            if clk_count = CLK_DIV - 1 then
+                clk_count  <= clk_count + 1;
                 sclk_int   <= '0';
+                sclk_fall  <= '1';
+            elsif clk_count = (CLK_DIV * 2) - 1 then
+                clk_count  <= 0;
+                sclk_int   <= '1';
+                sclk_rise  <= '1';
+            else
+                clk_count <= clk_count + 1;
             end if;
+        else
+            clk_count  <= 0;
+            sclk_int   <= '0';
         end if;
-    end process;
+    end if;
+end process;
+
 
     -- FSM: handles SPI transaction
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            if reset = '1' then
-                state      <= IDLE;
-                bit_cnt    <= 0;
-                shift_tx   <= (others => '0');
-                shift_rx   <= (others => '0');
-                tx_latch   <= (others => '0');
-                done       <= '0';
-                cs_int     <= '1';
-            else
-                case state is
-                    when IDLE =>
-                        done <= '0';
-                        if start = '1' then
-                            tx_latch <= tx_data;
-                            cs_int   <= '1'; -- pull-up before asserting
-                            state    <= ASSERT_CS;
-                        end if;
+    -- FSM process
+process(clk)
+begin
+    if rising_edge(clk) then
+        if reset = '1' then
+            state            <= IDLE;
+            bit_cnt          <= 0;
+            shift_tx         <= (others => '0');
+            shift_rx         <= (others => '0');
+            tx_latch         <= (others => '0');
+            done             <= '0';
+            cs_int           <= '1';
+            reset_clk_count  <= '0';
+        else
+            case state is
+                when IDLE =>
+                    done            <= '0';
+                    reset_clk_count <= '0'; -- always low in IDLE
+                    if start = '1' then
+                        tx_latch <= tx_data;
+                        cs_int   <= '1';
+                        state    <= ASSERT_CS;
+                    end if;
 
                     when ASSERT_CS =>
-                        cs_int   <= '0';      -- assert CS low
-                        shift_tx <= tx_latch;
-                        shift_rx <= (others => '0');
-                        bit_cnt  <= 0;
-                        state    <= TRANSFER;
+                        cs_int           <= '0';
+                        reset_clk_count  <= '1';
+                        state            <= PREPARE_TRANSFER;
+                        shift_tx         <= tx_latch;
+                        shift_rx         <= (others => '0');
+                    
+                    when PREPARE_TRANSFER =>
+                        bit_cnt          <= 0;
+                        reset_clk_count  <= '0';
+                        state            <= TRANSFER;
 
-                    when TRANSFER =>
-                        -- On falling edge: send MOSI
-                        if sclk_fall = '1' then
-                            shift_tx <= shift_tx(30 downto 0) & '0';
-                        -- On rising edge: sample MISO
-                        elsif sclk_rise = '1' then
-                            shift_rx <= shift_rx(30 downto 0) & miso;
+                when TRANSFER =>
+                    reset_clk_count <= '0';
 
-                            if bit_cnt = 31 then
-                                state <= DONE_STATE;
-                            else
-                                bit_cnt <= bit_cnt + 1;
-                            end if;
+                    if sclk_fall = '1' then
+                        shift_tx <= shift_tx(30 downto 0) & '0';
+
+                    elsif sclk_rise = '1' then
+                        shift_rx <= shift_rx(30 downto 0) & miso;
+
+                        if bit_cnt = 31 then
+                            state <= DONE_STATE;
+                        else
+                            bit_cnt <= bit_cnt + 1;
                         end if;
+                    end if;
 
-                    when DONE_STATE =>
-                        cs_int <= '1';       -- deassert CS
-                        done   <= '1';
-                        if start = '0' then
-                            state <= IDLE;
-                        end if;
-                end case;
-            end if;
+                when DONE_STATE =>
+                    cs_int <= '1';
+                    done   <= '1';
+                    if start = '0' then
+                        state <= IDLE;
+                    end if;
+            end case;
         end if;
-    end process;
+    end if;
+end process;
 
 end Behavioral;
 
