@@ -7,7 +7,7 @@
 void spi_write(uint32_t val) { SPI_WRITE = val; }
 
 int main() {
-    spi_write(0xAA55AA55);
+    spi_write(0x00390011);
 
     return 0;
 }
