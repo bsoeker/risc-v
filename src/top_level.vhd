@@ -72,10 +72,8 @@ architecture Behavioral of top is
     signal spi_addr      : std_logic_vector(1 downto 0);
     signal spi_en        : std_logic;
     signal spi_start     : std_logic;
-    signal spi_read_data : std_logic_vector(7 downto 0);
-    signal spi_rx_reg    : std_logic_vector(7 downto 0) := (others => '0');
+    signal spi_read_data : std_logic_vector(31 downto 0);
     signal spi_done      : std_logic;
-    signal spi_done_reg  : std_logic := '0';
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -345,6 +343,7 @@ begin
 
     -- Connect to PMOD pin
     JA(4) <= w5500_rst_n;
+
     led(0) <= JA(0);
     led(1) <= JA(1);
     led(2) <= JA(2);
@@ -356,36 +355,20 @@ begin
         port map (
             clk       => slow_clk,
             reset     => internal_reset, 
-            spi_en    => spi_en,
             start     => spi_start,
-            mosi_data => store_write_data,
-            miso      => JA(3),   -- ← comes from fake slave
-            mosi      => JA(2),   -- → produced here
-            sclk      => JA(0),   -- → produced here
-            scs       => JA(1),   -- → produced here
+            tx_data   => store_write_data,
             done      => spi_done,
-            rx_data   => led(15 downto 8)
+            rx_data   => spi_read_data,
+            sclk      => JA(0), 
+            mosi      => JA(2), 
+            miso      => JA(3), 
+            cs        => JA(1)   
         );
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            if reset = '1' then
-                spi_rx_reg   <= (others => '0');
-                spi_done_reg <= '0';
-            else
-                if spi_done = '1' then
-                    spi_rx_reg   <= spi_read_data;
-                    spi_done_reg <= '1';
-                end if;
-            end if;
-        end if;
-    end process;
 
     mem_data <= ram_read_data when ram_en = '1' else 
                 uart_read_data when uart_en = '1' else
                 rom_read_data when rom_en = '1' else
-                x"000000" & spi_rx_reg when spi_en = '1' and spi_addr = "01" else
-                x"0000000" & "000" & spi_done_reg when spi_en = '1' and spi_addr = "10";
+                spi_read_data when spi_en = '1' and spi_addr = "01";
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (
