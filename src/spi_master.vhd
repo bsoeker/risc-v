@@ -84,8 +84,12 @@ begin
                     state      <= WAIT_CS;
 
                 when WAIT_CS =>
-                    state <= TRANSFER;
-                    sclk_int   <= '1';  
+                    clk_count <= clk_count + 1;
+                    if clk_count = (2 * CLK_DIV) then
+                        clk_count <= -1;
+                        state <= TRANSFER;
+                        sclk_int   <= '1';  
+                    end if;
                 -- 🚀 Transfer bits
                 when TRANSFER =>
                     clk_count <= clk_count + 1;
