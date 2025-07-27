@@ -21,7 +21,7 @@ end spi_master;
 
 architecture Behavioral of spi_master is
 
-    type state_type is (IDLE, ASSERT_CS, WAIT_CS, TRANSFER, DONE_STATE);
+    type state_type is (IDLE, ASSERT_CS, WAIT_CS, TRANSFER, DEASSERT_CS, DONE_STATE);
     signal state       : state_type := IDLE;
 
     signal shift_tx    : std_logic_vector(31 downto 0) := (others => '0');
@@ -29,7 +29,7 @@ architecture Behavioral of spi_master is
     signal bit_cnt     : integer range 0 to 31 := 0;
     signal clk_count   : integer := 0;
 
-    constant CLK_DIV   : integer := 2500000;-- system_clk / (2 * SPI_clk)
+    constant CLK_DIV   : integer := 2500000;
     signal sclk_int    : std_logic := '0';
     signal cs_int      : std_logic := '1';
     signal tx_latch    : std_logic_vector(31 downto 0) := (others => '0');
@@ -61,7 +61,6 @@ begin
             else
             case state is
 
-                -- 💤 Wait for start
                 when IDLE =>
                     cs_int    <= '1';
                     sclk_int  <= '0';
@@ -74,7 +73,6 @@ begin
                         state    <= ASSERT_CS;
                     end if;
 
-                -- 🟢 Assert chip select
                 when ASSERT_CS =>
                     cs_int     <= '0';
                     shift_tx   <= tx_latch;
@@ -85,12 +83,12 @@ begin
 
                 when WAIT_CS =>
                     clk_count <= clk_count + 1;
-                    if clk_count = (2 * CLK_DIV) then
-                        clk_count <= -1;
+                    if clk_count = (2 * CLK_DIV) - 1 then
+                        clk_count <= 0;
                         state <= TRANSFER;
                         sclk_int   <= '1';  
                     end if;
-                -- 🚀 Transfer bits
+
                 when TRANSFER =>
                     clk_count <= clk_count + 1;
 
@@ -105,14 +103,22 @@ begin
                         shift_rx  <= shift_rx(30 downto 0) & miso; -- sample in
 
                         if bit_cnt = 31 then
-                            state <= DONE_STATE;
+                            sclk_int <= '0';
+                            clk_count <= 0;
+                            state <= DEASSERT_CS;
                         else
                             bit_cnt   <= bit_cnt + 1;
-                            clk_count <= -1; -- restart
+                            clk_count <= 0; -- restart
                         end if;
                     end if;
 
-                -- ✅ Done
+                when DEASSERT_CS =>
+                    if clk_count = (2 * CLK_DIV) - 1 then
+                        state <= DONE_STATE;
+                    else
+                        clk_count <= clk_count + 1;
+                    end if;
+
                 when DONE_STATE =>
                     cs_int    <= '1';
                     done_int  <= '1';
@@ -127,4 +133,6 @@ begin
     end process;
 
 end Behavioral;
+
+
 

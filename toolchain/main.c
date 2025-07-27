@@ -8,7 +8,7 @@ int main() {
     for (volatile int i = 0; i < 2500000; i++)
         ;
 
-    spi_write(0x00009C00);
+    spi_write(0x00390000);
 
     return 0;
 }
