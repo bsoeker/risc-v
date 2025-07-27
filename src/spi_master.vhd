@@ -33,7 +33,6 @@ architecture Behavioral of spi_master is
     signal sclk_int    : std_logic := '0';
     signal cs_int      : std_logic := '1';
     signal tx_latch    : std_logic_vector(31 downto 0) := (others => '0');
-    signal ready_int   : std_logic := '1';
 
 begin
 
@@ -42,7 +41,7 @@ begin
     cs      <= cs_int;
     mosi    <= shift_tx(31);
     rx_data <= shift_rx(7 downto 0);
-    ready   <= ready_int;
+    ready   <= '1' when state = IDLE else '0';
 
     process(clk)
     begin
@@ -56,7 +55,6 @@ begin
                 clk_count  <= 0;
                 sclk_int   <= '0';
                 cs_int     <= '1';
-                ready_int  <= '1';
 
             else
             case state is
@@ -66,11 +64,9 @@ begin
                     sclk_int  <= '0';
                     clk_count <= 0;
                     bit_cnt   <= 0;
-                    ready_int <= '1';
 
                     if start = '1' then
                         tx_latch  <= tx_data;
-                        ready_int <= '0';
                         state     <= ASSERT_CS;
                     end if;
 
