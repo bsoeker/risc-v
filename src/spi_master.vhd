@@ -100,14 +100,14 @@ begin
                     -- SCLK rising edge (sample MISO)
                     elsif clk_count = (2 * CLK_DIV) - 1 then
                         sclk_int  <= '1';
-                        shift_rx  <= shift_rx(30 downto 0) & miso; -- sample in
 
-                        if bit_cnt = 31 then
-                            sclk_int <= '0';
-                            clk_count <= 0;
-                            state <= DEASSERT_CS;
-                        else
+                        if bit_cnt < 31 then
+                            shift_rx  <= shift_rx(30 downto 0) & miso; -- sample in
                             bit_cnt   <= bit_cnt + 1;
+                            clk_count <= 0;
+                        else
+                            sclk_int <= '0';
+                            state <= DEASSERT_CS;
                             clk_count <= 0; -- restart
                         end if;
                     end if;
