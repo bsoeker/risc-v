@@ -8,8 +8,8 @@ entity spi_master is
         reset      : in  std_logic;
         start      : in  std_logic;              -- One-cycle pulse
         tx_data    : in  std_logic_vector(31 downto 0); -- 32-bit data to send
-        done       : out std_logic;              -- High when transaction is done
-        rx_data    : out std_logic_vector(31 downto 0); -- Received data
+        ready      : out std_logic; 
+        rx_data    : out std_logic_vector(7 downto 0); -- Received data
 
         -- SPI signals
         sclk       : out std_logic;
@@ -29,11 +29,11 @@ architecture Behavioral of spi_master is
     signal bit_cnt     : integer range 0 to 31 := 0;
     signal clk_count   : integer := 0;
 
-    constant CLK_DIV   : integer := 2500000;
+    constant CLK_DIV   : integer := 2;
     signal sclk_int    : std_logic := '0';
     signal cs_int      : std_logic := '1';
     signal tx_latch    : std_logic_vector(31 downto 0) := (others => '0');
-    signal done_int    : std_logic := '0';
+    signal ready_int   : std_logic := '1';
 
 begin
 
@@ -41,8 +41,8 @@ begin
     sclk    <= sclk_int;
     cs      <= cs_int;
     mosi    <= shift_tx(31);
-    rx_data <= shift_rx;
-    done    <= done_int;
+    rx_data <= shift_rx(7 downto 0);
+    ready   <= ready_int;
 
     process(clk)
     begin
@@ -56,7 +56,7 @@ begin
                 clk_count  <= 0;
                 sclk_int   <= '0';
                 cs_int     <= '1';
-                done_int   <= '0';
+                ready_int  <= '1';
 
             else
             case state is
@@ -64,13 +64,14 @@ begin
                 when IDLE =>
                     cs_int    <= '1';
                     sclk_int  <= '0';
-                    done_int  <= '0';
                     clk_count <= 0;
                     bit_cnt   <= 0;
+                    ready_int <= '1';
 
                     if start = '1' then
-                        tx_latch <= tx_data;
-                        state    <= ASSERT_CS;
+                        tx_latch  <= tx_data;
+                        ready_int <= '0';
+                        state     <= ASSERT_CS;
                     end if;
 
                 when ASSERT_CS =>
@@ -121,7 +122,6 @@ begin
 
                 when DONE_STATE =>
                     cs_int    <= '1';
-                    done_int  <= '1';
 
                     if start = '0' then
                         state <= IDLE;

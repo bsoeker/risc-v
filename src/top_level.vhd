@@ -76,8 +76,8 @@ architecture Behavioral of top is
     signal spi_addr      : std_logic_vector(1 downto 0);
     signal spi_en        : std_logic;
     signal spi_start     : std_logic;
-    signal spi_read_data : std_logic_vector(31 downto 0);
-    signal spi_done      : std_logic;
+    signal spi_read_data : std_logic_vector(7 downto 0);
+    signal spi_ready     : std_logic;
 
     -- Control signals
     signal alu_control : std_logic_vector(3 downto 0);
@@ -355,7 +355,7 @@ begin
             reset     => internal_reset, 
             start     => spi_start,
             tx_data   => store_write_data,
-            done      => spi_done,
+            ready     => spi_ready,
             rx_data   => spi_read_data,
             sclk      => sclk, -- JA(0), 
             mosi      => mosi, -- JA(2), 
@@ -363,12 +363,13 @@ begin
             cs        => scs   -- JA(1)   
         );
 
-    led(15 downto 0) <= spi_read_data(15 downto 0);
+    led(7 downto 0) <= spi_read_data(7 downto 0);
 
     mem_data <= ram_read_data when ram_en = '1' else 
                 uart_read_data when uart_en = '1' else
                 rom_read_data when rom_en = '1' else
-                spi_read_data when spi_en = '1' and spi_addr = "01";
+                x"000000" & spi_read_data when spi_en = '1' and spi_addr = "01" else
+                x"0000000" & "000" & spi_ready when spi_en = '1' and spi_addr = "10";
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (
