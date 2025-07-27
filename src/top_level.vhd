@@ -11,7 +11,7 @@ entity top is
         sclk        : out std_logic;
         scs         : out std_logic;
         mosi        : out std_logic;
-        -- miso        : in std_logic;
+        miso        : in std_logic;
         reset_slave : out std_logic
     );
 end top;
@@ -103,7 +103,7 @@ architecture Behavioral of top is
     signal reset_sync_1 : std_logic := '1';
 
 
-constant RESET_CYCLES : integer := 15000;
+constant RESET_CYCLES : integer := 1500000;
 signal rst_counter    : integer range 0 to RESET_CYCLES := 0;
 signal w5500_rst_n    : std_logic := '0';  -- Active LOW reset
 
@@ -359,7 +359,7 @@ begin
             rx_data   => spi_read_data,
             sclk      => sclk, -- JA(0), 
             mosi      => mosi, -- JA(2), 
-            miso      => '1', -- JA(3), 
+            miso      => miso, -- JA(3), 
             cs        => scs   -- JA(1)   
         );
 
