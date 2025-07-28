@@ -1,7 +1,7 @@
 ENTRY(_start)
 
 MEMORY {
-    ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 1K
+    ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
     RAM (rw)  : ORIGIN = 0x10000000, LENGTH = 4K
 }
 
