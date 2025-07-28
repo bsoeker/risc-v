@@ -1,3 +1,4 @@
 vivado/
 build/
 implementation/
+*.png
