@@ -27,8 +27,8 @@ python3 toolchain/convert.py
 
 # === Fill ROM with padded values or formatted lines ===
 echo "[5/6] Filling ROM..."
+python3 toolchain/prepare_rom.py
 python3 toolchain/fill_rom.py
-python3 toolchain/update_rom.py
 
 echo "✅ Build completed!"
 

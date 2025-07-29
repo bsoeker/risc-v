@@ -1,27 +1,34 @@
-import os
-os.makedirs("build", exist_ok=True)
+rom_vhd_path = "src/rom.vhd"
+rom_init_path = "build/rom_init.txt"
 
-def format_rom_vhdl(mem_file_path, output_path="build/rom_init.txt", addr_offset=0):
-    with open(mem_file_path, 'r') as f:
-        lines = f.readlines()
+# Load replacement ROM data
+with open(rom_init_path, "r") as f:
+    rom_lines = [line.strip() for line in f if "=>" in line]
 
-    output = []
-    addr = addr_offset
+# Read rom.vhd lines
+with open(rom_vhd_path, "r") as f:
+    lines = f.readlines()
 
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        output.append(f'    {addr} => x"{line.upper()}",')
-        addr += 1  # increment by word size
+updated_lines = []
+inside_rom_array = False
 
-    output.append('    others => x"00000000"')
+for line in lines:
+    if not inside_rom_array:
+        updated_lines.append(line)
+        if ":= (" in line:
+            inside_rom_array = True
+    else:
+        if ")" in line:
+            # Insert the rom_init content before the closing )
+            for l in rom_lines:
+                updated_lines.append("    " + l + "\n")
+            updated_lines.append(");\n")
+            inside_rom_array = False
+        # skip all lines inside the rom_array block
 
-    with open(output_path, 'w') as f_out:
-        f_out.write('\n'.join(output))
+# Write back
+with open(rom_vhd_path, "w") as f:
+    f.writelines(updated_lines)
 
-    print(f"✅ VHDL ROM array data saved to: {output_path}")
-
-# Example usage
-format_rom_vhdl("build/rom.mem")
+print("ROM updated successfully.")
 
