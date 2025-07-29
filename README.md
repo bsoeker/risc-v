@@ -47,7 +47,7 @@ project-root/
 
 ---
 
-## 🛠 Toolchain Setup (Linux)
+## Toolchain Setup (Linux)
 
 This project uses the **xPack prebuilt RISC-V GCC** toolchain:
 
@@ -76,11 +76,11 @@ riscv-none-elf-gcc --version
 
 ---
 
-## 🧰 Toolchain Usage (from Root)
+## Toolchain Usage (from Root)
 
 You can simply use the provided script:
 
-### ✅ 1. Build the Program
+### 1. Build the Program
 From the root of the project, run:
 ```bash
 ./build.sh
