@@ -2,3 +2,4 @@ vivado/
 build/
 implementation/
 *.png
+sim/
