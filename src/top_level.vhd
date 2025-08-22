@@ -7,7 +7,6 @@ entity top is
         clk         : in  std_logic;
         reset       : in  std_logic;
         RsTx        : out std_logic;
-        led         : out std_logic_vector(15 downto 0);
         sclk        : out std_logic;
         scs         : out std_logic;
         mosi        : out std_logic;
@@ -363,13 +362,12 @@ begin
             cs        => scs   -- JA(1)   
         );
 
-    led(7 downto 0) <= spi_read_data(7 downto 0);
-
     mem_data <= ram_read_data when ram_en = '1' else 
                 uart_read_data when uart_en = '1' else
                 rom_read_data when rom_en = '1' else
                 x"000000" & spi_read_data when spi_en = '1' and spi_addr = "01" else
-                x"0000000" & "000" & spi_ready when spi_en = '1' and spi_addr = "10";
+                x"0000000" & "000" & spi_ready when spi_en = '1' and spi_addr = "10" else
+                (others => '0');
     -- === Load Unit ===
     load_unit_inst: entity work.load_unit
         port map (

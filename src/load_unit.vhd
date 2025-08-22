@@ -20,6 +20,11 @@ begin
 
     process(all)
     begin
+        -- defaults to avoid latch inference
+        byte_val <= (others => '0');
+        halfword <= (others => '0');
+        loaded_value <= (others => '0');
+
         case funct3 is
             -- LB (signed byte)
             when "000" =>
