@@ -1,0 +1,26 @@
+[*]
+[*] GTKWave Analyzer v3.3.124 (w)1999-2025 BSI
+[*] Wed Aug 20 16:07:12 2025
+[*]
+[dumpfile] "/home/pixelvoid/Development/Hardware/risc-v/sim/waves.ghw"
+[dumpfile_mtime] "Wed Aug 20 15:58:24 2025"
+[dumpfile_size] 294507
+[savefile] "/home/pixelvoid/Development/Hardware/risc-v/waveconfig.gtkw"
+[timestart] 0
+[size] 1920 989
+[pos] -27 -24
+*-27.000000 540000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tb_top.
+[treeopen] top.tb_top.uut.
+[sst_width] 269
+[signals_width] 174
+[sst_expanded] 1
+[sst_vpaned_height] 292
+@22
+#{top.tb_top.uut.pc[31:0]} top.tb_top.uut.pc[31] top.tb_top.uut.pc[30] top.tb_top.uut.pc[29] top.tb_top.uut.pc[28] top.tb_top.uut.pc[27] top.tb_top.uut.pc[26] top.tb_top.uut.pc[25] top.tb_top.uut.pc[24] top.tb_top.uut.pc[23] top.tb_top.uut.pc[22] top.tb_top.uut.pc[21] top.tb_top.uut.pc[20] top.tb_top.uut.pc[19] top.tb_top.uut.pc[18] top.tb_top.uut.pc[17] top.tb_top.uut.pc[16] top.tb_top.uut.pc[15] top.tb_top.uut.pc[14] top.tb_top.uut.pc[13] top.tb_top.uut.pc[12] top.tb_top.uut.pc[11] top.tb_top.uut.pc[10] top.tb_top.uut.pc[9] top.tb_top.uut.pc[8] top.tb_top.uut.pc[7] top.tb_top.uut.pc[6] top.tb_top.uut.pc[5] top.tb_top.uut.pc[4] top.tb_top.uut.pc[3] top.tb_top.uut.pc[2] top.tb_top.uut.pc[1] top.tb_top.uut.pc[0]
+#{top.tb_top.uut.pc_plus_four[31:0]} top.tb_top.uut.pc_plus_four[31] top.tb_top.uut.pc_plus_four[30] top.tb_top.uut.pc_plus_four[29] top.tb_top.uut.pc_plus_four[28] top.tb_top.uut.pc_plus_four[27] top.tb_top.uut.pc_plus_four[26] top.tb_top.uut.pc_plus_four[25] top.tb_top.uut.pc_plus_four[24] top.tb_top.uut.pc_plus_four[23] top.tb_top.uut.pc_plus_four[22] top.tb_top.uut.pc_plus_four[21] top.tb_top.uut.pc_plus_four[20] top.tb_top.uut.pc_plus_four[19] top.tb_top.uut.pc_plus_four[18] top.tb_top.uut.pc_plus_four[17] top.tb_top.uut.pc_plus_four[16] top.tb_top.uut.pc_plus_four[15] top.tb_top.uut.pc_plus_four[14] top.tb_top.uut.pc_plus_four[13] top.tb_top.uut.pc_plus_four[12] top.tb_top.uut.pc_plus_four[11] top.tb_top.uut.pc_plus_four[10] top.tb_top.uut.pc_plus_four[9] top.tb_top.uut.pc_plus_four[8] top.tb_top.uut.pc_plus_four[7] top.tb_top.uut.pc_plus_four[6] top.tb_top.uut.pc_plus_four[5] top.tb_top.uut.pc_plus_four[4] top.tb_top.uut.pc_plus_four[3] top.tb_top.uut.pc_plus_four[2] top.tb_top.uut.pc_plus_four[1] top.tb_top.uut.pc_plus_four[0]
+@23
+#{top.tb_top.uut.instr[31:0]} top.tb_top.uut.instr[31] top.tb_top.uut.instr[30] top.tb_top.uut.instr[29] top.tb_top.uut.instr[28] top.tb_top.uut.instr[27] top.tb_top.uut.instr[26] top.tb_top.uut.instr[25] top.tb_top.uut.instr[24] top.tb_top.uut.instr[23] top.tb_top.uut.instr[22] top.tb_top.uut.instr[21] top.tb_top.uut.instr[20] top.tb_top.uut.instr[19] top.tb_top.uut.instr[18] top.tb_top.uut.instr[17] top.tb_top.uut.instr[16] top.tb_top.uut.instr[15] top.tb_top.uut.instr[14] top.tb_top.uut.instr[13] top.tb_top.uut.instr[12] top.tb_top.uut.instr[11] top.tb_top.uut.instr[10] top.tb_top.uut.instr[9] top.tb_top.uut.instr[8] top.tb_top.uut.instr[7] top.tb_top.uut.instr[6] top.tb_top.uut.instr[5] top.tb_top.uut.instr[4] top.tb_top.uut.instr[3] top.tb_top.uut.instr[2] top.tb_top.uut.instr[1] top.tb_top.uut.instr[0]
+[pattern_trace] 1
+[pattern_trace] 0
