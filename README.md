@@ -4,12 +4,32 @@ This project contains a complete softcore CPU implementing the **RV32I** RISC-V 
 
 ---
 
+## TL;DR (Plain English)
+
+A simple but complete **computer from scratch**:  
+- Designed a CPU in VHDL  
+- Wrote a toolchain to compile and run C programs  
+- Programmed it onto an FPGA with Vivado  
+- Connected it to peripherals like UART and SPI for real-world I/O  
+
+---
+
+## Highlights
+
+- **Custom CPU core**: Single-cycle RV32I softcore written in VHDL  
+- **Bare-metal C toolchain**: Startup assembly, linker script, and Python utilities to generate FPGA ROM init files  
+- **Peripheral integration**: Memory-mapped UART and SPI Master interfaces  
+- **Full FPGA workflow**: Synthesized, placed, routed, and bitstream generated with **Xilinx Vivado Design Suite**  
+- **End-to-end learning project**: From instruction set to running firmware on hardware  
+
+---
+
 ## What’s Inside?
 
-- **VHDL implementation** of a single-cycle RV32I CPU with UART and SPI_Master peripheral interfaces
-- **Bare-metal C toolchain** for compiling programs
-- Ready for simulation & deployment on **Basys3**
-- Educational, simple, and modifiable — ideal for learning how CPUs work from the ground up
+- **VHDL implementation** of a single-cycle RV32I CPU with UART and SPI_Master peripheral interfaces  
+- **Bare-metal C toolchain** for compiling programs  
+- Ready for simulation & deployment on **Basys3**  
+- Educational, simple, and modifiable — ideal for learning how CPUs work from the ground up  
 
 ---
 
@@ -24,7 +44,7 @@ project-root/
 │   ├── linker.ld        # Custom linker script
 │   ├── convert.py       # ELF -> .mem
 │   ├── prepare_rom.py   # .mem -> VHDL ROM init
-│   └── fill_rom.py      # fill the rom with the machine code
+│   └── fill_rom.py      # Fill the ROM with the machine code
 │
 ├── build/               # Generated after using the toolchain!
 │   ├── dump.txt
@@ -37,11 +57,10 @@ project-root/
 │   ├── rom.vhd          # VHDL ROM module to be initialized
 │   └── <...other VHDL components...>
 │
-├── build.sh             # build script for the baremetal C toolchain
+├── build.sh             # Build script for the baremetal C toolchain
 │   
 ├── Basys-3-Master.xdc   # Constraints file for Basys3 Board
 │   
-│
 └── README.md
 ```
 
@@ -76,12 +95,38 @@ riscv-none-elf-gcc --version
 
 ---
 
-## Toolchain Usage (from Root)
+## Quickstart
 
-You can simply use the provided script:
+This section walks through the full flow:  
+1. **Programming the FPGA with Vivado**  
+2. **Building and updating firmware with the custom toolchain**
 
-### 1. Build the Program
-From the root of the project, run:
+---
+
+### 1. FPGA Programming Flow (Vivado)
+
+1. Open **Vivado Design Suite** and create a new project for your Xilinx board (e.g., Basys3).  
+2. Add all files inside the `src/` directory as **source files**.  
+   - Set the VHDL standard to **2008**.  
+3. Add the provided constraints file (`Basys-3-Master.xdc`) to match pin assignments (clock, UART, reset, etc.).  
+4. (Optional but recommended) Add the testbench file `test/tb_top.vhd` as a **simulation source**.  
+   - Run Vivado’s built-in simulation environment to observe the CPU behavior.  
+   - Inspect **waveforms** (e.g., PC, instructions, memory bus, UART signals) to verify functionality before programming hardware.  
+5. Run the following Vivado flow for hardware programming:  
+   - **Synthesis**  
+   - **Implementation**  
+   - **Bitstream Generation**  
+6. Open **Hardware Manager**, connect to the FPGA board, and program it with the generated `.bit` file.
+
+⚠️ **Important**: The instruction ROM (`rom.vhd`) is initialized at synthesis time.  
+Whenever you change your firmware (e.g., new program compiled with the toolchain), you must re-run the Vivado flow (Synthesis → Implementation → Bitstream Generation → Program Device).  
+
+---
+
+### 2. Toolchain Usage (from Root)
+
+You can build and load your C/assembly programs into the ROM using the provided script:
+
 ```bash
 ./build.sh
 ```
@@ -90,8 +135,8 @@ This script will:
 
 - Compile your C and assembly source files using **riscv-none-elf-gcc**
 - Convert the output to a flat binary
-- Generate a .mem file
-- Format it into a VHDL-friendly ROM initialization file and replace the contents of rom.vhd
+- Generate a `.mem` file
+- Format it into a VHDL-friendly ROM initialization file and replace the contents of `rom.vhd`
 
 ---
 
@@ -104,9 +149,8 @@ This script will:
 
 ## Target Hardware
 
-- Digilent **Basys3 FPGA Board** or an FPGA Board of your choice
-- 100 MHz clock (you may need a clock divider)
-- 4K RAM, 4K ROM (configurable via linker script)
-
----
+- Digilent **Basys3 FPGA Board** or an FPGA Board of your choice  
+- 100 MHz clock (you may need a clock divider)  
+- 4K RAM, 4K ROM (configurable via linker script)  
+- Built and deployed with the **Xilinx Vivado Design Suite**  
 
