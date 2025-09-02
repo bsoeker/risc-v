@@ -1,6 +1,6 @@
 # RISC-V RV32I Softcore CPU (Basys3)
 
-This project contains a complete softcore CPU implementing the **RV32I** RISC-V instruction set, written in VHDL. While the implementation was tested on the **Basys3 FPGA board**, the design is **fully portable to any FPGA board** — as long as the user provides a compatible **constraints file** mapping their board’s pins (e.g., clock, UART, reset, etc.). The softcore includes memory-mapped **UART** and **SPI Master** peripheral interfaces, and comes with a minimal **bare-metal toolchain** to compile and load C programs into ROM.
+This project contains a complete softcore CPU implementing the **RV32I** RISC-V instruction set, written in VHDL. While the implementation was tested on the **Basys3 FPGA board**, the design is **fully portable to any FPGA board** — as long as the user provides a compatible **constraints file** (mapping the board’s pins such as clock, UART, reset, etc.) **and uses the appropriate vendor toolchain** (e.g., Xilinx Vivado for Basys3/Artix-7 boards, Intel Quartus for Cyclone boards, Lattice Diamond/ Radiant or Yosys+NextPNR for iCE40/ECP5 boards). The softcore includes memory-mapped **UART** and **SPI Master** peripheral interfaces, and comes with a minimal **bare-metal toolchain** to compile and load C programs into ROM.
 
 ---
 
