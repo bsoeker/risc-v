@@ -150,7 +150,6 @@ This script will:
 ## Target Hardware
 
 - Digilent **Basys3 FPGA Board** or an FPGA Board of your choice  
-- 100 MHz clock (you may need a clock divider)  
 - 4K RAM, 4K ROM (configurable via linker script)  
 - Built and deployed with the **Xilinx Vivado Design Suite**  
 
